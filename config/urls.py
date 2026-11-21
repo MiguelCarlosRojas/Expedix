@@ -2,8 +2,13 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
+from config.health import health_check
 
 urlpatterns = [
+    # Health checks for Render, Kubernetes, and monitoring
+    path('health/', health_check, name='health_check'),
+    path('api/v1/health/', health_check, name='api_health_check'),
+
     path('admin/', admin.site.urls),
     path('api/v1/auth/', include('apps.accounts.urls')),
     path('api/v1/roles/', include('apps.roles.urls')),

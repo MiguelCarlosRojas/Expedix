@@ -173,3 +173,16 @@ def test_the_five_reports(auth_client):
         res_export = auth_client.get(f'/api/v1/reports/{r_id}/export/?format=excel')
         assert res_export.status_code == 200
         assert 'openxmlformats' in res_export['content-type']
+
+@pytest.mark.django_db
+def test_health_check_endpoint(api_client):
+    res = api_client.get('/health/')
+    assert res.status_code == 200
+    data = res.json()
+    assert data['status'] == 'ok'
+    assert data['database'] == 'healthy'
+    assert 'password' not in res.content.decode().lower()
+
+    res_api = api_client.get('/api/v1/health/')
+    assert res_api.status_code == 200
+    assert res_api.json()['status'] == 'ok'

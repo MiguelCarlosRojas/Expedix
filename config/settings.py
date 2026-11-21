@@ -1,5 +1,6 @@
 import os
 import sys
+import urllib.parse
 from pathlib import Path
 from dotenv import load_dotenv
 
@@ -14,13 +15,12 @@ load_dotenv(BASE_DIR.parent / '.env')
 load_dotenv(BASE_DIR / '.env')
 
 # Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
+SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', os.getenv('SECRET_KEY', 'django-insecure-enterprise-db-payout-secret-key-change-in-prod-!#99'))
 
-SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'django-insecure-enterprise-db-payout-secret-key-change-in-prod-!#99')
+DEBUG = os.getenv('DEBUG', os.getenv('DJANGO_DEBUG', 'True')).lower() in ('true', '1', 'yes')
 
-DEBUG = os.getenv('DJANGO_DEBUG', 'True').lower() in ('true', '1', 'yes')
-
-ALLOWED_HOSTS = os.getenv('DJANGO_ALLOWED_HOSTS', '*').split(',')
+raw_hosts = os.getenv('ALLOWED_HOSTS', os.getenv('DJANGO_ALLOWED_HOSTS', '*'))
+ALLOWED_HOSTS = [h.strip() for h in raw_hosts.split(',') if h.strip()]
 
 # Application definition
 INSTALLED_APPS = [
@@ -92,26 +92,31 @@ ASGI_APPLICATION = 'config.asgi.application'
 AUTH_USER_MODEL = 'accounts.User'
 
 # Database configuration
-# Supports PostgreSQL with automatic fallback to SQLite for local tests
-DB_ENGINE = os.getenv('DB_ENGINE', 'django.db.backends.postgresql')
-DB_NAME = os.getenv('POSTGRES_DB', 'expedientes_db')
-DB_USER = os.getenv('POSTGRES_USER', 'postgres')
-DB_PASSWORD = os.getenv('POSTGRES_PASSWORD', 'postgres')
-DB_HOST = os.getenv('POSTGRES_HOST', 'localhost')
-DB_PORT = os.getenv('POSTGRES_PORT', '5432')
-
-# Check if PostgreSQL is explicitly disabled or not configured
+# Supports DATABASE_URL (Render/Kubernetes) or individual POSTGRES_* / DB_* env vars
+database_url = os.getenv('DATABASE_URL')
 USE_POSTGRES = os.getenv('USE_POSTGRES', 'False').lower() in ('true', '1')
 
-if USE_POSTGRES:
+if database_url:
+    parsed_db = urllib.parse.urlparse(database_url)
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql',
-            'NAME': DB_NAME,
-            'USER': DB_USER,
-            'PASSWORD': DB_PASSWORD,
-            'HOST': DB_HOST,
-            'PORT': DB_PORT,
+            'NAME': parsed_db.path.lstrip('/'),
+            'USER': parsed_db.username or '',
+            'PASSWORD': parsed_db.password or '',
+            'HOST': parsed_db.hostname or '',
+            'PORT': str(parsed_db.port or 5432),
+        }
+    }
+elif USE_POSTGRES:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': os.getenv('DB_NAME', os.getenv('POSTGRES_DB', 'expedientes_db')),
+            'USER': os.getenv('DB_USER', os.getenv('POSTGRES_USER', 'postgres')),
+            'PASSWORD': os.getenv('DB_PASSWORD', os.getenv('POSTGRES_PASSWORD', 'postgres')),
+            'HOST': os.getenv('DB_HOST', os.getenv('POSTGRES_HOST', 'localhost')),
+            'PORT': os.getenv('DB_PORT', os.getenv('POSTGRES_PORT', '5432')),
         }
     }
 else:
@@ -186,6 +191,24 @@ CSRF_TRUSTED_ORIGINS = [
     'http://localhost:8000',
     'http://127.0.0.1:8000',
 ]
+
+extra_cors = os.getenv('CORS_ALLOWED_ORIGINS', '')
+if extra_cors:
+    for origin in extra_cors.split(','):
+        if origin.strip() and origin.strip() not in CORS_ALLOWED_ORIGINS:
+            CORS_ALLOWED_ORIGINS.append(origin.strip())
+
+frontend_url = os.getenv('FRONTEND_URL', '')
+if frontend_url and frontend_url.strip() not in CORS_ALLOWED_ORIGINS:
+    CORS_ALLOWED_ORIGINS.append(frontend_url.strip())
+
+extra_csrf = os.getenv('CSRF_TRUSTED_ORIGINS', '')
+if extra_csrf:
+    for origin in extra_csrf.split(','):
+        if origin.strip() and origin.strip() not in CSRF_TRUSTED_ORIGINS:
+            CSRF_TRUSTED_ORIGINS.append(origin.strip())
+if frontend_url and frontend_url.strip() not in CSRF_TRUSTED_ORIGINS:
+    CSRF_TRUSTED_ORIGINS.append(frontend_url.strip())
 
 SESSION_COOKIE_HTTPONLY = True
 CSRF_COOKIE_HTTPONLY = False  # Allows React frontend to read csrf token for headers
