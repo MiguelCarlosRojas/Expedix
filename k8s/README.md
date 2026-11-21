@@ -23,17 +23,20 @@ cp secrets.example.yaml secrets.yaml
 # Editar secrets.yaml con las credenciales reales
 kubectl apply -f secrets.yaml
 
-# 4. Servicios internos
+# 4. Infraestructura de caché y persistencia (Redis)
+kubectl apply -f redis.yaml
+
+# 5. Servicios internos
 kubectl apply -f api-service.yaml
 kubectl apply -f web-service.yaml
 
-# 5. Cargas de trabajo (Deployments)
+# 6. Cargas de trabajo (Deployments)
 kubectl apply -f api-deployment.yaml
 kubectl apply -f web-deployment.yaml
 kubectl apply -f worker-deployment.yaml
 kubectl apply -f beat-deployment.yaml
 
-# 6. Enrutador público (Ingress)
+# 7. Enrutador público (Ingress)
 kubectl apply -f ingress.yaml
 ```
 
