@@ -1,0 +1,53 @@
+# ==============================================================================
+# Expedix Web - Git Ignore Configuration
+# ==============================================================================
+
+# Dependencias
+node_modules/
+.pnpm-store/
+.npm/
+
+# Compilación y producción
+dist/
+build/
+coverage/
+
+# Variables de entorno y secretos
+.env
+.env.*
+*.env
+.env.example
+
+# Logs
+*.log
+logs/
+
+# Editores y entornos
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Sistema operativo
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Archivos temporales
+tmp/
+temp/
+.cache/
+*.tmp
+*.bak
+
+# Docker y despliegue
+docker/
+Dockerfile
+Dockerfile.*
+docker-compose.yml
+docker-compose.yaml
+compose.yml
+compose.yaml
+.dockerignore
+nginx/
+nginx.conf
