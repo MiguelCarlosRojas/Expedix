@@ -8,6 +8,11 @@ RUN corepack enable && corepack prepare pnpm@latest --activate
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml* ./
 RUN pnpm install --frozen-lockfile
 
+ARG VITE_API_BASE_URL=""
+ARG VITE_WS_BASE_URL=""
+ENV VITE_API_BASE_URL=${VITE_API_BASE_URL}
+ENV VITE_WS_BASE_URL=${VITE_WS_BASE_URL}
+
 COPY . ./
 RUN pnpm build
 
