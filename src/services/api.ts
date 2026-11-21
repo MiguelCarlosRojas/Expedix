@@ -7,8 +7,11 @@ function getCookie(name: string): string | null {
   return null;
 }
 
+const rawApiBase = import.meta.env.VITE_API_BASE_URL;
+const apiBase = rawApiBase ? `${rawApiBase.replace(/\/+$/, '')}/api/v1` : '/api/v1';
+
 export const api = axios.create({
-  baseURL: '/api/v1',
+  baseURL: apiBase,
   withCredentials: true,
   headers: {
     'Content-Type': 'application/json',

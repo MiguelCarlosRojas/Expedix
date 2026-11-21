@@ -42,12 +42,9 @@ temp/
 
 # Docker y despliegue
 docker/
-Dockerfile
-Dockerfile.*
 docker-compose.yml
 docker-compose.yaml
 compose.yml
 compose.yaml
-.dockerignore
 nginx/
 nginx.conf

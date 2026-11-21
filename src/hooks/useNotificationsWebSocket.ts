@@ -27,9 +27,16 @@ export const useNotificationsWebSocket = () => {
     if (!user) return;
     fetchUnreadCount();
 
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const host = window.location.host;
-    const wsUrl = `${protocol}//${host}/ws/notifications/`;
+    const rawWsBase = import.meta.env.VITE_WS_BASE_URL;
+    let wsUrl: string;
+    if (rawWsBase) {
+      const trimmed = rawWsBase.replace(/\/+$/, '');
+      wsUrl = trimmed.startsWith('ws') ? `${trimmed}/ws/notifications/` : `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${trimmed.replace(/^https?:\/\//, '')}/ws/notifications/`;
+    } else {
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      const host = window.location.host;
+      wsUrl = `${protocol}//${host}/ws/notifications/`;
+    }
 
     try {
       const ws = new WebSocket(wsUrl);
