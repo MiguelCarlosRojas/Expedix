@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: expedix
+  labels:
+    app.kubernetes.io/name: expedix
+    app.kubernetes.io/part-of: expedix-system

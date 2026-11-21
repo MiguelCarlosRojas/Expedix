@@ -1,0 +1,29 @@
+# ==============================================================================
+# Expedix Deployment Infrastructure - Git Ignore
+# ==============================================================================
+
+# Secrets and environment files
+.env
+.env.*
+*.env
+.env.example
+secrets.yaml
+*.pem
+*.key
+*.p12
+*.pfx
+secrets/
+credentials/
+service-account*.json
+
+# OS and Editors
+.DS_Store
+Thumbs.db
+Desktop.ini
+.vscode/
+.idea/
+
+# Temporary files
+*.tmp
+*.bak
+*.log

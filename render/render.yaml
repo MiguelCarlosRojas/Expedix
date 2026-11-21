@@ -1,0 +1,151 @@
+services:
+  # ----------------------------------------------------------------------------
+  # 1. API & Django Channels Web Service
+  # ----------------------------------------------------------------------------
+  - type: web
+    name: expedix-api
+    runtime: image
+    image:
+      url: docker.io/miguelangelcr/expedix-ia:api-latest
+    region: oregon
+    plan: starter
+    healthCheckPath: /health/
+    envVars:
+      - key: DEBUG
+        value: "False"
+      - key: DJANGO_SECRET_KEY
+        generateValue: true
+      - key: DATABASE_URL
+        fromDatabase:
+          name: expedix-postgres
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: expedix-redis
+          property: connectionString
+      - key: CELERY_BROKER_URL
+        fromService:
+          type: redis
+          name: expedix-redis
+          property: connectionString
+      - key: CELERY_RESULT_BACKEND
+        fromService:
+          type: redis
+          name: expedix-redis
+          property: connectionString
+      - key: ALLOWED_HOSTS
+        value: "*"
+      - key: CORS_ALLOWED_ORIGINS
+        value: "https://expedix-web.onrender.com"
+      - key: CSRF_TRUSTED_ORIGINS
+        value: "https://expedix-web.onrender.com,https://expedix-api.onrender.com"
+
+  # ----------------------------------------------------------------------------
+  # 2. React SPA Web Service
+  # ----------------------------------------------------------------------------
+  - type: web
+    name: expedix-web
+    runtime: image
+    image:
+      url: docker.io/miguelangelcr/expedix-ia:web-latest
+    region: oregon
+    plan: starter
+    healthCheckPath: /health
+    envVars:
+      - key: VITE_API_BASE_URL
+        value: "https://expedix-api.onrender.com"
+      - key: VITE_WS_BASE_URL
+        value: "wss://expedix-api.onrender.com"
+
+  # ----------------------------------------------------------------------------
+  # 3. Celery Asynchronous Worker
+  # ----------------------------------------------------------------------------
+  - type: worker
+    name: expedix-celery-worker
+    runtime: image
+    image:
+      url: docker.io/miguelangelcr/expedix-ia:api-latest
+    region: oregon
+    plan: starter
+    dockerCommand: celery -A config worker -l INFO
+    envVars:
+      - key: DEBUG
+        value: "False"
+      - key: DJANGO_SECRET_KEY
+        fromService:
+          type: web
+          name: expedix-api
+          envVarKey: DJANGO_SECRET_KEY
+      - key: DATABASE_URL
+        fromDatabase:
+          name: expedix-postgres
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: expedix-redis
+          property: connectionString
+      - key: CELERY_BROKER_URL
+        fromService:
+          type: redis
+          name: expedix-redis
+          property: connectionString
+      - key: CELERY_RESULT_BACKEND
+        fromService:
+          type: redis
+          name: expedix-redis
+          property: connectionString
+
+  # ----------------------------------------------------------------------------
+  # 4. Celery Beat Scheduler
+  # ----------------------------------------------------------------------------
+  - type: worker
+    name: expedix-celery-beat
+    runtime: image
+    image:
+      url: docker.io/miguelangelcr/expedix-ia:api-latest
+    region: oregon
+    plan: starter
+    dockerCommand: celery -A config beat -l INFO
+    envVars:
+      - key: DEBUG
+        value: "False"
+      - key: DJANGO_SECRET_KEY
+        fromService:
+          type: web
+          name: expedix-api
+          envVarKey: DJANGO_SECRET_KEY
+      - key: DATABASE_URL
+        fromDatabase:
+          name: expedix-postgres
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: expedix-redis
+          property: connectionString
+      - key: CELERY_BROKER_URL
+        fromService:
+          type: redis
+          name: expedix-redis
+          property: connectionString
+      - key: CELERY_RESULT_BACKEND
+        fromService:
+          type: redis
+          name: expedix-redis
+          property: connectionString
+
+# ------------------------------------------------------------------------------
+# Managed Infrastructure (PostgreSQL & Redis)
+# ------------------------------------------------------------------------------
+databases:
+  - name: expedix-postgres
+    region: oregon
+    plan: starter
+    databaseName: expedientes_db
+    user: expedientes_user
+
+  - name: expedix-redis
+    region: oregon
+    plan: starter

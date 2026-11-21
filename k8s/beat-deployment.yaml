@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: expedix-celery-beat
+  namespace: expedix
+  labels:
+    app: expedix-celery-beat
+    component: scheduler
+    app.kubernetes.io/name: expedix
+spec:
+  replicas: 1  # Exactamente 1 réplica activa para prevenir duplicación de tareas periódicas
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: expedix-celery-beat
+  template:
+    metadata:
+      labels:
+        app: expedix-celery-beat
+        component: scheduler
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        fsGroup: 10001
+      containers:
+        - name: beat
+          image: docker.io/miguelangelcr/expedix-ia:api-latest
+          imagePullPolicy: IfNotPresent
+          command: ["celery", "-A", "config", "beat", "-l", "INFO"]
+          envFrom:
+            - configMapRef:
+                name: expedix-config
+            - secretRef:
+                name: expedix-secrets
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "128Mi"
+            limits:
+              cpu: "200m"
+              memory: "256Mi"

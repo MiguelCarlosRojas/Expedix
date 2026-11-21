@@ -1,0 +1,53 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: expedix-ingress
+  namespace: expedix
+  labels:
+    app.kubernetes.io/name: expedix
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+    nginx.ingress.kubernetes.io/websocket-services: "expedix-api-service"
+spec:
+  rules:
+    - host: expedix.example.com
+      http:
+        paths:
+          # API REST
+          - path: /api/
+            pathType: Prefix
+            backend:
+              service:
+                name: expedix-api-service
+                port:
+                  number: 8000
+          # Django Channels WebSockets
+          - path: /ws/
+            pathType: Prefix
+            backend:
+              service:
+                name: expedix-api-service
+                port:
+                  number: 8000
+          # API Health Probes
+          - path: /health/
+            pathType: Prefix
+            backend:
+              service:
+                name: expedix-api-service
+                port:
+                  number: 8000
+          # Web Frontend SPA (Fallback raíz)
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: expedix-web-service
+                port:
+                  number: 80
+  tls:
+    - hosts:
+        - expedix.example.com
+      secretName: expedix-tls-cert

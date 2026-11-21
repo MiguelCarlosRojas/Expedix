@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: expedix-config
+  namespace: expedix
+  labels:
+    app.kubernetes.io/name: expedix
+data:
+  DEBUG: "False"
+  ALLOWED_HOSTS: "expedix-api,expedix-api-service,localhost,127.0.0.1,api.expedix.local,expedix.example.com"
+  CORS_ALLOWED_ORIGINS: "http://localhost,https://web.expedix.local,https://expedix.example.com"
+  CSRF_TRUSTED_ORIGINS: "http://localhost,https://web.expedix.local,https://expedix.example.com"
+  PORT: "8000"
+  USE_POSTGRES: "True"
+  TIME_ZONE: "America/Lima"
+  GOOGLE_DRIVE_ROOT_FOLDER_ID: "root"
