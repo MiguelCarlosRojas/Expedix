@@ -113,11 +113,13 @@ Cada rama de desarrollo cuenta con su propio workflow en `.github/workflows/dock
 
 ## 7. Pruebas y Aseguramiento de Calidad
 
-Para ejecutar la suite de integración localmente:
+Para ejecutar la suite de integración localmente en Windows:
 
-```bash
-cd backend
+```powershell
+Set-Location "backend"
+.\venv\Scripts\Activate.ps1
 pytest tests/test_full_system.py -v
+Set-Location ".."
 ```
 
 Cobertura validada:
@@ -130,4 +132,102 @@ Cobertura validada:
 - Editor Univer Sheets y sincronización debounced.
 - Ciclo de vida documental y compilación de PDF oficial ReportLab.
 - Exportación certificada de los 5 reportes (PDF, Excel, CSV).
-- Endpoint de verificación de salud (`/health/`).
+- Endpoint de verificación de salud (`/health/` y `/api/v1/health/`).
+
+---
+
+## 8. Guía de Ejecución Local en Windows (PowerShell)
+
+### A. Preparación de Infraestructura Opcional (PostgreSQL y Redis)
+Por defecto, Expedix en desarrollo local puede ejecutarse con **SQLite** y memoria en canales para desarrollo ágil sin necesidad de contenedores. Si desea utilizar PostgreSQL y Redis reales idénticos a producción, puede levantarlos de forma aislada:
+
+```powershell
+# Levantar únicamente PostgreSQL y Redis en segundo plano
+docker compose up -d expedix-postgres expedix-redis
+```
+
+### B. Ejecución del Backend (Django + Daphne ASGI)
+
+```powershell
+# 1. Acceder al directorio backend
+Set-Location "backend"
+
+# 2. Configurar variables de entorno locales
+Copy-Item ".env.example" ".env"
+
+# 3. Activar el entorno virtual de Python 3.12
+.\venv\Scripts\Activate.ps1
+
+# 4. Instalar dependencias si fuera necesario
+pip install -r requirements.txt
+
+# 5. Aplicar migraciones en la base de datos
+python manage.py migrate
+
+# 6. Sembrar datos maestros del sistema (Roles, Permisos, Empresa, Plantillas y Superusuario)
+python manage.py seed_system_data
+
+# 7. Iniciar el servidor ASGI con Daphne (soporte WebSockets nativo en puerto 8000)
+daphne -b 127.0.0.1 -p 8000 config.asgi:application
+```
+
+El backend responderá de inmediato en:
+- Health Check: `http://127.0.0.1:8000/health/`
+- API REST: `http://127.0.0.1:8000/api/v1/`
+- Panel Django Admin: `http://127.0.0.1:8000/admin/`
+
+**Credenciales iniciales sembradas:**
+- **Usuario:** `admin`
+- **Contraseña:** `admin123`
+- **Rol:** `Superadministrador`
+
+### C. Ejecución del Frontend (React 19 + Vite)
+
+En una segunda terminal de PowerShell:
+
+```powershell
+# 1. Acceder al directorio frontend
+Set-Location "frontend"
+
+# 2. Configurar variables de entorno locales
+Copy-Item ".env.example" ".env"
+
+# 3. Instalar dependencias con pnpm
+pnpm install
+
+# 4. Iniciar el servidor de desarrollo Vite con HMR
+pnpm dev
+```
+
+La aplicación abrirá en `http://localhost:5173`. Las llamadas a `/api` y los sockets `/ws` son redirigidos de forma transparente al backend mediante el proxy de desarrollo configurado en `vite.config.ts`.
+
+---
+
+## 9. Ejecución Completa con Docker Compose
+
+Para levantar la arquitectura completa (6 servicios orquestados) en un único comando:
+
+```powershell
+# Compilar y levantar todos los contenedores
+docker compose up --build
+
+# Para detener los servicios conservando los datos persistentes de PostgreSQL y Redis:
+docker compose down
+
+# Para ver los logs en tiempo real de un servicio específico:
+docker compose logs -f expedix-api
+docker compose logs -f expedix-web
+```
+
+---
+
+## 10. Solución a Incidencias CI/CD en GitHub Actions
+
+### Error: `Username and password required` en `docker/login-action`
+Este error se producía cuando el pipeline se ejecutaba antes de registrar los secretos en GitHub.
+- **Causa:** Ausencia de variables en el almacén de secretos del repositorio.
+- **Solución implementada:** Se registraron `DOCKERHUB_USERNAME` (`miguelangelcr`) y `DOCKERHUB_TOKEN` en `Settings -> Secrets and variables -> Actions`. Los flujos posteriores (`44943998627` y `44943984483`) concluyeron exitosamente en estado verde (`success`).
+
+### Advertencia: `[DEP0040] DeprecationWarning: The punycode module is deprecated`
+- **Origen:** Proviene del runtime interno de Node.js 24 ejecutado por el runner de GitHub Actions al cargar paquetes de acciones empacadas con versiones anteriores de utilitarios de red (`punycode`).
+- **Impacto:** Es un aviso informativo (*warning*) de deprecación del motor Node.js del runner, no un error bloqueante, y no afecta en absoluto a las aplicaciones Django ni React del repositorio.
