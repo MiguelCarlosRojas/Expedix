@@ -8,10 +8,12 @@ Esta rama (`feature/deploy`) contiene exclusivamente los manifiestos, configurac
 
 ```text
 /
+├── docker-compose.yml        # Orquestación de producción basada en imágenes oficiales
 ├── k8s/                      # Manifiestos para clústeres Kubernetes
 │   ├── namespace.yaml        # Namespace dedicado: expedix
 │   ├── configmap.yaml        # Variables de configuración pública
 │   ├── secrets.example.yaml  # Plantilla de secretos (sin credenciales reales)
+│   ├── redis.yaml            # Deployment, PVC y Service para Redis 7
 │   ├── api-deployment.yaml   # Deployment API (daphne, 2 réplicas)
 │   ├── api-service.yaml      # Service interno ClusterIP para API
 │   ├── web-deployment.yaml   # Deployment Web (nginx SPA, 2 réplicas)

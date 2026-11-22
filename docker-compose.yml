@@ -1,0 +1,178 @@
+services:
+  # ----------------------------------------------------------------------------
+  # 1. Base de Datos Relacional PostgreSQL
+  # ----------------------------------------------------------------------------
+  expedix-postgres:
+    image: postgres:16-alpine
+    container_name: expedix-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_NAME:-expedientes_db}
+      POSTGRES_USER: ${DB_USER:-expedientes_user}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-expedientes_secret_2026}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-expedientes_user} -d ${DB_NAME:-expedientes_db}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - expedix-network
+
+  # ----------------------------------------------------------------------------
+  # 2. Caché y Broker de Mensajería Redis
+  # ----------------------------------------------------------------------------
+  expedix-redis:
+    image: redis:7-alpine
+    container_name: expedix-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - expedix-network
+
+  # ----------------------------------------------------------------------------
+  # 3. Backend API (Daphne ASGI sobre imagen oficial de Docker Hub)
+  # ----------------------------------------------------------------------------
+  expedix-api:
+    image: docker.io/miguelangelcr/expedix-ia:api-latest
+    container_name: expedix-api
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    volumes:
+      - static_volume:/app/staticfiles
+      - media_volume:/app/media
+    environment:
+      - DJANGO_SECRET_KEY=${DJANGO_SECRET_KEY:-django-prod-secret-change-me-2026}
+      - DEBUG=${DEBUG:-False}
+      - ALLOWED_HOSTS=${ALLOWED_HOSTS:-localhost,127.0.0.1,expedix-api,expedix-web,0.0.0.0}
+      - CORS_ALLOWED_ORIGINS=${CORS_ALLOWED_ORIGINS:-http://localhost,http://localhost:80,http://localhost:3000,http://localhost:5173,http://127.0.0.1}
+      - USE_POSTGRES=True
+      - DB_NAME=${DB_NAME:-expedientes_db}
+      - DB_USER=${DB_USER:-expedientes_user}
+      - DB_PASSWORD=${DB_PASSWORD:-expedientes_secret_2026}
+      - DB_HOST=expedix-postgres
+      - DB_PORT=5432
+      - USE_REDIS=True
+      - REDIS_URL=redis://expedix-redis:6379/0
+      - CELERY_BROKER_URL=redis://expedix-redis:6379/1
+      - CELERY_RESULT_BACKEND=redis://expedix-redis:6379/1
+      - GOOGLE_DRIVE_ROOT_FOLDER_ID=${GOOGLE_DRIVE_ROOT_FOLDER_ID:-root}
+      - GOOGLE_SERVICE_ACCOUNT_FILE=${GOOGLE_SERVICE_ACCOUNT_FILE:-credentials/google_credentials.json}
+    depends_on:
+      expedix-postgres:
+        condition: service_healthy
+      expedix-redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health/"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    networks:
+      - expedix-network
+
+  # ----------------------------------------------------------------------------
+  # 4. Frontend SPA (Nginx sobre imagen oficial de Docker Hub)
+  # ----------------------------------------------------------------------------
+  expedix-web:
+    image: docker.io/miguelangelcr/expedix-ia:web-latest
+    container_name: expedix-web
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      - expedix-api
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "-", "http://localhost:80/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    networks:
+      - expedix-network
+
+  # ----------------------------------------------------------------------------
+  # 5. Worker Asíncrono Celery
+  # ----------------------------------------------------------------------------
+  expedix-celery-worker:
+    image: docker.io/miguelangelcr/expedix-ia:api-latest
+    container_name: expedix-celery-worker
+    restart: unless-stopped
+    command: celery -A config worker -l INFO
+    volumes:
+      - media_volume:/app/media
+    environment:
+      - DJANGO_SECRET_KEY=${DJANGO_SECRET_KEY:-django-prod-secret-change-me-2026}
+      - USE_POSTGRES=True
+      - DB_NAME=${DB_NAME:-expedientes_db}
+      - DB_USER=${DB_USER:-expedientes_user}
+      - DB_PASSWORD=${DB_PASSWORD:-expedientes_secret_2026}
+      - DB_HOST=expedix-postgres
+      - DB_PORT=5432
+      - USE_REDIS=True
+      - REDIS_URL=redis://expedix-redis:6379/0
+      - CELERY_BROKER_URL=redis://expedix-redis:6379/1
+      - CELERY_RESULT_BACKEND=redis://expedix-redis:6379/1
+      - GOOGLE_DRIVE_ROOT_FOLDER_ID=${GOOGLE_DRIVE_ROOT_FOLDER_ID:-root}
+      - GOOGLE_SERVICE_ACCOUNT_FILE=${GOOGLE_SERVICE_ACCOUNT_FILE:-credentials/google_credentials.json}
+    depends_on:
+      expedix-api:
+        condition: service_started
+      expedix-postgres:
+        condition: service_healthy
+      expedix-redis:
+        condition: service_healthy
+    networks:
+      - expedix-network
+
+  # ----------------------------------------------------------------------------
+  # 6. Planificador Periódico Celery Beat
+  # ----------------------------------------------------------------------------
+  expedix-celery-beat:
+    image: docker.io/miguelangelcr/expedix-ia:api-latest
+    container_name: expedix-celery-beat
+    restart: unless-stopped
+    command: celery -A config beat -l INFO
+    environment:
+      - DJANGO_SECRET_KEY=${DJANGO_SECRET_KEY:-django-prod-secret-change-me-2026}
+      - USE_POSTGRES=True
+      - DB_NAME=${DB_NAME:-expedientes_db}
+      - DB_USER=${DB_USER:-expedientes_user}
+      - DB_PASSWORD=${DB_PASSWORD:-expedientes_secret_2026}
+      - DB_HOST=expedix-postgres
+      - DB_PORT=5432
+      - USE_REDIS=True
+      - REDIS_URL=redis://expedix-redis:6379/0
+      - CELERY_BROKER_URL=redis://expedix-redis:6379/1
+      - CELERY_RESULT_BACKEND=redis://expedix-redis:6379/1
+    depends_on:
+      expedix-api:
+        condition: service_started
+      expedix-postgres:
+        condition: service_healthy
+      expedix-redis:
+        condition: service_healthy
+    networks:
+      - expedix-network
+
+networks:
+  expedix-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  redis_data:
+  static_volume:
+  media_volume:
