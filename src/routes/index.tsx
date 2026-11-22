@@ -18,8 +18,8 @@ const ProtectedRoute: React.FC<{ children: React.ReactElement }> = ({ children }
 
   if (loading) {
     return (
-      <Center style={{ width: '100vw', height: '100vh' }}>
-        <Loader size="lg" color="enterpriseBlue" />
+      <Center style={{ width: '100vw', height: '100vh', backgroundColor: '#f8fafc' }}>
+        <Loader size="lg" color="vetGreen" />
       </Center>
     );
   }
@@ -49,8 +49,10 @@ export const AppRoutes: React.FC = () => {
         <Route path="inicio" element={<HomePage />} />
         <Route path="dashboard" element={<DashboardPage />} />
         <Route path="documentos" element={<DocumentsPage />} />
+        <Route path="documentos/:category" element={<DocumentsPage />} />
         <Route path="drives" element={<DrivesPage />} />
         <Route path="reportes" element={<ReportsPage />} />
+        <Route path="reportes/:reportId" element={<ReportsPage />} />
         <Route path="administracion" element={<AdministrationPage />} />
         <Route path="roles" element={<RolesPage />} />
         <Route path="usuarios" element={<UsersPage />} />

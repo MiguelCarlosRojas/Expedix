@@ -55,7 +55,7 @@ export const Header: React.FC<HeaderProps> = ({ title, breadcrumbs }) => {
                 inline
                 label={unreadCount > 0 ? unreadCount : undefined}
                 size={16}
-                color="red"
+                color="vetGreen"
                 disabled={unreadCount === 0}
               >
                 <ActionIcon variant="light" color="gray" size="lg" radius="md">
@@ -64,13 +64,13 @@ export const Header: React.FC<HeaderProps> = ({ title, breadcrumbs }) => {
               </Indicator>
             </Popover.Target>
             <Popover.Dropdown p={0}>
-              <Group justify="space-between" p="sm" bg="gray.0">
-                <Text fw={700} size="sm">Notificaciones</Text>
+              <Group justify="space-between" p="sm" bg="vetGreen.0">
+                <Text fw={700} size="sm" c="vetGreen.9">Notificaciones</Text>
                 {unreadCount > 0 && (
                   <UnstyledButton onClick={markAllAsRead}>
                     <Group gap={4}>
-                      <IconChecks size={14} color="#0b7285" />
-                      <Text size="xs" c="enterpriseBlue.7" fw={600}>Marcar leídas</Text>
+                      <IconChecks size={14} color="#16a34a" />
+                      <Text size="xs" c="vetGreen.7" fw={600}>Marcar leídas</Text>
                     </Group>
                   </UnstyledButton>
                 )}
@@ -88,7 +88,7 @@ export const Header: React.FC<HeaderProps> = ({ title, breadcrumbs }) => {
                         key={notif.id}
                         p="xs"
                         style={{
-                          backgroundColor: notif.is_read ? 'transparent' : '#f0f9ff',
+                          backgroundColor: notif.is_read ? 'transparent' : '#f0fdf4',
                           borderBottom: '1px solid #f1f5f9',
                           cursor: 'pointer',
                         }}
@@ -99,7 +99,7 @@ export const Header: React.FC<HeaderProps> = ({ title, breadcrumbs }) => {
                             {notif.notification_type === 'ERROR' ? (
                               <IconAlertTriangle size={16} color="red" />
                             ) : (
-                              <IconFileCheck size={16} color="teal" />
+                              <IconFileCheck size={16} color="#16a34a" />
                             )}
                             <div>
                               <Text size="xs" fw={notif.is_read ? 500 : 700}>
@@ -114,7 +114,7 @@ export const Header: React.FC<HeaderProps> = ({ title, breadcrumbs }) => {
                             </div>
                           </Group>
                           {!notif.is_read && (
-                            <Badge size="xs" color="blue" variant="dot" />
+                            <Badge size="xs" color="vetGreen" variant="dot" />
                           )}
                         </Group>
                       </Box>
@@ -135,7 +135,7 @@ export const Header: React.FC<HeaderProps> = ({ title, breadcrumbs }) => {
                     alt={user?.full_name}
                     radius="xl"
                     size="md"
-                    color="enterpriseBlue"
+                    color="vetGreen"
                   >
                     {user?.username?.slice(0, 2).toUpperCase()}
                   </Avatar>

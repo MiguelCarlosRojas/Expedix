@@ -5,11 +5,15 @@ import {
 } from '@mantine/core';
 import {
   IconUsers, IconPlus, IconEdit, IconKey, IconCheck, IconAlertTriangle,
-  IconUserCheck, IconUserX
+  IconUserCheck, IconUserX, IconPaw
 } from '@tabler/icons-react';
 import { api } from '../../services/api';
 import { User, Role } from '../../types';
 import { notifications } from '@mantine/notifications';
+import { useSortableData } from '../../hooks/useSortableData';
+import { SortableTh } from '../../components/ui/SortableTh';
+import { TableSkeleton } from '../../components/ui/SkeletonLoaders';
+import { EmptyState } from '../../components/ui/EmptyState';
 
 export const UsersPage: React.FC = () => {
   const [users, setUsers] = useState<User[]>([]);
@@ -55,6 +59,8 @@ export const UsersPage: React.FC = () => {
   useEffect(() => {
     fetchUsersAndRoles();
   }, []);
+
+  const { sortedData: sortedUsers, sortConfig, requestSort } = useSortableData(users, 'full_name', 'asc');
 
   const handleOpenCreate = () => {
     setEditingUser(null);
@@ -139,22 +145,36 @@ export const UsersPage: React.FC = () => {
   };
 
   return (
-    <Box>
+    <Box className="anim-fade-in">
       <Box mb="lg">
         <Group justify="space-between">
           <div>
+            <Group gap="xs" mb={4}>
+              <Badge color="vetGreen" variant="light" size="sm" leftSection={<IconPaw size={13} />}>
+                Equipo Clínico & Operativo
+              </Badge>
+              <Badge color="gray" variant="outline" size="sm">
+                Control de Cuentas
+              </Badge>
+            </Group>
             <Title order={2} fw={800} c="dark.8">
-              Administración de Usuarios y Cuentas
+              Administración de Usuarios y Personal Veterinario
             </Title>
-            <Text c="dimmed" size="sm">
-              Gestión de credenciales, roles asignados, auditoría de creación y control de accesos.
+            <Text c="dimmed" size="sm" mt={2}>
+              Gestión de credenciales, roles clínicos asignados, auditoría de creación y control de accesos.
             </Text>
           </div>
 
           <Button
-            color="enterpriseBlue"
+            color="vetGreen"
             leftSection={<IconPlus size={18} />}
             onClick={handleOpenCreate}
+            styles={{
+              root: {
+                background: 'linear-gradient(135deg, #16a34a 0%, #15803d 100%)',
+                boxShadow: '0 2px 8px rgba(22, 163, 74, 0.25)',
+              },
+            }}
           >
             Nuevo Usuario
           </Button>
@@ -162,207 +182,233 @@ export const UsersPage: React.FC = () => {
       </Box>
 
       {/* Users Table */}
-      <Card p={0} radius="md" withBorder bg="white">
-        <Table highlightOnHover verticalSpacing="sm">
-          <Table.Thead bg="gray.0">
-            <Table.Tr>
-              <Table.Th>Usuario / Nombre</Table.Th>
-              <Table.Th>Correo Electrónico</Table.Th>
-              <Table.Th>Rol Asignado</Table.Th>
-              <Table.Th>Cargo</Table.Th>
-              <Table.Th>Estado</Table.Th>
-              <Table.Th>Última Conexión</Table.Th>
-              <Table.Th>Creado Por</Table.Th>
-              <Table.Th style={{ textAlign: 'right' }}>Acciones</Table.Th>
-            </Table.Tr>
-          </Table.Thead>
-          <Table.Tbody>
-            {users.map((u) => (
-              <Table.Tr key={u.id}>
-                <Table.Td>
-                  <Group gap="xs">
-                    <Avatar src={u.avatar_display} radius="xl" size="sm" color="enterpriseBlue">
-                      {u.username.slice(0, 2).toUpperCase()}
-                    </Avatar>
-                    <div>
-                      <Text size="sm" fw={600} c="dark.8">{u.full_name}</Text>
-                      <Text size="xs" c="dimmed">@{u.username}</Text>
-                    </div>
-                  </Group>
-                </Table.Td>
-                <Table.Td>
-                  <Text size="xs">{u.email}</Text>
-                </Table.Td>
-                <Table.Td>
-                  <Badge color="enterpriseBlue" variant="light" size="sm">
-                    {u.role_details?.name || (u.is_superuser ? 'Superadministrador' : 'Sin rol')}
-                  </Badge>
-                </Table.Td>
-                <Table.Td>
-                  <Text size="xs" c="dimmed">{u.job_title || '-'}</Text>
-                </Table.Td>
-                <Table.Td>
-                  <Badge color={u.is_active ? 'teal' : 'red'} size="xs" variant="filled">
-                    {u.is_active ? 'Activo' : 'Inactivo'}
-                  </Badge>
-                </Table.Td>
-                <Table.Td>
-                  <Text size="xs" c="dimmed">{u.last_login ? new Date(u.last_login).toLocaleString() : 'Nunca'}</Text>
-                </Table.Td>
-                <Table.Td>
-                  <Text size="xs" c="dimmed">{u.created_by_name || 'Sistema'}</Text>
-                </Table.Td>
-                <Table.Td style={{ textAlign: 'right' }}>
-                  <Group gap={4} justify="flex-end">
-                    <Tooltip label={u.is_active ? 'Desactivar usuario' : 'Activar usuario'}>
-                      <ActionIcon
-                        variant="subtle"
-                        color={u.is_active ? 'orange' : 'teal'}
-                        size="sm"
-                        onClick={() => handleToggleActive(u)}
-                      >
-                        {u.is_active ? <IconUserX size={16} /> : <IconUserCheck size={16} />}
-                      </ActionIcon>
-                    </Tooltip>
-
-                    <Tooltip label="Restablecer contraseña">
-                      <ActionIcon
-                        variant="subtle"
-                        color="blue"
-                        size="sm"
-                        onClick={() => {
-                          setUserToReset(u);
-                          setNewPassword('');
-                          setResetModal(true);
-                        }}
-                      >
-                        <IconKey size={16} />
-                      </ActionIcon>
-                    </Tooltip>
-
-                    <Tooltip label="Editar datos">
-                      <ActionIcon
-                        variant="subtle"
-                        color="gray"
-                        size="sm"
-                        onClick={() => handleOpenEdit(u)}
-                      >
-                        <IconEdit size={16} />
-                      </ActionIcon>
-                    </Tooltip>
-                  </Group>
-                </Table.Td>
+      {loading ? (
+        <TableSkeleton rows={5} columns={7} />
+      ) : sortedUsers.length === 0 ? (
+        <EmptyState
+          title="No hay usuarios registrados"
+          description="Inicie registrando al personal médico veterinario y administrativo."
+          actionText="Crear Primer Usuario"
+          onAction={handleOpenCreate}
+        />
+      ) : (
+        <Card p={0} radius="md" withBorder bg="white" shadow="xs" style={{ overflowX: 'auto' }}>
+          <Table highlightOnHover verticalSpacing="sm" withTableBorder withColumnBorders>
+            <Table.Thead bg="gray.0">
+              <Table.Tr>
+                <SortableTh columnKey="full_name" sortConfig={sortConfig} onSort={requestSort}>
+                  Usuario / Nombre
+                </SortableTh>
+                <SortableTh columnKey="email" sortConfig={sortConfig} onSort={requestSort}>
+                  Correo Electrónico
+                </SortableTh>
+                <SortableTh columnKey="role_details" sortConfig={sortConfig} onSort={requestSort}>
+                  Rol Clínico
+                </SortableTh>
+                <SortableTh columnKey="job_title" sortConfig={sortConfig} onSort={requestSort}>
+                  Cargo / Especialidad
+                </SortableTh>
+                <SortableTh columnKey="is_active" sortConfig={sortConfig} onSort={requestSort} align="center" width={110}>
+                  Estado
+                </SortableTh>
+                <SortableTh columnKey="last_login" sortConfig={sortConfig} onSort={requestSort} width={150}>
+                  Última Conexión
+                </SortableTh>
+                <SortableTh columnKey="created_by_name" sortConfig={sortConfig} onSort={requestSort} width={140}>
+                  Registrado Por
+                </SortableTh>
+                <Table.Th style={{ textAlign: 'center', width: 140 }}>Acciones</Table.Th>
               </Table.Tr>
-            ))}
-          </Table.Tbody>
-        </Table>
-      </Card>
+            </Table.Thead>
+            <Table.Tbody>
+              {sortedUsers.map((u) => (
+                <Table.Tr key={u.id}>
+                  <Table.Td p="sm">
+                    <Group gap="xs">
+                      <Avatar src={u.avatar_display} radius="xl" size="sm" color="vetGreen">
+                        {u.username.slice(0, 2).toUpperCase()}
+                      </Avatar>
+                      <div>
+                        <Text size="sm" fw={600} c="dark.8">{u.full_name}</Text>
+                        <Text size="xs" c="dimmed">@{u.username}</Text>
+                      </div>
+                    </Group>
+                  </Table.Td>
+                  <Table.Td p="sm">
+                    <Text size="xs">{u.email}</Text>
+                  </Table.Td>
+                  <Table.Td p="sm">
+                    <Badge color="vetGreen" variant="light" size="sm">
+                      {u.role_details?.name || (u.is_superuser ? 'Superadministrador' : 'Sin rol')}
+                    </Badge>
+                  </Table.Td>
+                  <Table.Td p="sm">
+                    <Text size="xs" c="dimmed">{u.job_title || 'Veterinario General'}</Text>
+                  </Table.Td>
+                  <Table.Td p="sm" style={{ textAlign: 'center' }}>
+                    <Badge color={u.is_active ? 'green' : 'red'} size="xs" variant="filled">
+                      {u.is_active ? 'Activo' : 'Inactivo'}
+                    </Badge>
+                  </Table.Td>
+                  <Table.Td p="sm">
+                    <Text size="xs" c="dimmed">{u.last_login ? new Date(u.last_login).toLocaleString() : 'Nunca'}</Text>
+                  </Table.Td>
+                  <Table.Td p="sm">
+                    <Text size="xs" c="dimmed">{u.created_by_name || 'Sistema'}</Text>
+                  </Table.Td>
+                  <Table.Td p="sm" style={{ textAlign: 'center' }}>
+                    <Group gap={4} justify="center">
+                      <Tooltip label={u.is_active ? 'Desactivar acceso' : 'Habilitar acceso'}>
+                        <ActionIcon
+                          variant="subtle"
+                          color={u.is_active ? 'orange' : 'teal'}
+                          size="sm"
+                          onClick={() => handleToggleActive(u)}
+                        >
+                          {u.is_active ? <IconUserX size={16} /> : <IconUserCheck size={16} />}
+                        </ActionIcon>
+                      </Tooltip>
+                      <Tooltip label="Editar datos">
+                        <ActionIcon
+                          variant="subtle"
+                          color="blue"
+                          size="sm"
+                          onClick={() => handleOpenEdit(u)}
+                        >
+                          <IconEdit size={16} />
+                        </ActionIcon>
+                      </Tooltip>
+                      <Tooltip label="Restablecer contraseña">
+                        <ActionIcon
+                          variant="subtle"
+                          color="gray"
+                          size="sm"
+                          onClick={() => {
+                            setUserToReset(u);
+                            setNewPassword('');
+                            setResetModal(true);
+                          }}
+                        >
+                          <IconKey size={16} />
+                        </ActionIcon>
+                      </Tooltip>
+                    </Group>
+                  </Table.Td>
+                </Table.Tr>
+              ))}
+            </Table.Tbody>
+          </Table>
+        </Card>
+      )}
 
-      {/* User Create / Edit Modal */}
+      {/* Modal: Crear / Editar Usuario */}
       <Modal
         opened={userModal}
         onClose={() => setUserModal(false)}
-        title={<Text fw={700}>{editingUser ? `Editar Usuario: ${editingUser.username}` : 'Registrar Nuevo Usuario'}</Text>}
-        centered
+        title={editingUser ? `Editar Usuario: ${editingUser.username}` : 'Registrar Nuevo Usuario Veterinario'}
         size="md"
       >
-        <Stack gap="md">
+        <Stack gap="sm">
+          <TextInput
+            label="Usuario institucional"
+            placeholder="mv.carlos"
+            value={username}
+            onChange={(e) => setUsername(e.currentTarget.value)}
+            disabled={!!editingUser}
+            required
+          />
+          <TextInput
+            label="Correo Electrónico"
+            placeholder="carlos@expedixvet.com"
+            value={email}
+            onChange={(e) => setEmail(e.currentTarget.value)}
+            required
+          />
+          {!editingUser && (
+            <TextInput
+              label="Contraseña inicial"
+              placeholder="Mínimo 6 caracteres"
+              value={password}
+              onChange={(e) => setPassword(e.currentTarget.value)}
+              type="password"
+            />
+          )}
           <Group grow>
             <TextInput
               label="Nombres"
-              required
+              placeholder="Carlos"
               value={firstName}
               onChange={(e) => setFirstName(e.currentTarget.value)}
             />
             <TextInput
               label="Apellidos"
-              required
+              placeholder="Rojas"
               value={lastName}
               onChange={(e) => setLastName(e.currentTarget.value)}
             />
           </Group>
-
           <Group grow>
             <TextInput
-              label="Nombre de Usuario"
-              required
-              value={username}
-              onChange={(e) => setUsername(e.currentTarget.value)}
-            />
-            <TextInput
-              label="Correo Electrónico"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.currentTarget.value)}
-            />
-          </Group>
-
-          {!editingUser && (
-            <TextInput
-              label="Contraseña Inicial"
-              placeholder="Mínimo 6 caracteres"
-              required
-              value={password}
-              onChange={(e) => setPassword(e.currentTarget.value)}
-            />
-          )}
-
-          <Group grow>
-            <TextInput
-              label="Teléfono"
+              label="Teléfono de contacto"
+              placeholder="+51 987 654 321"
               value={phone}
               onChange={(e) => setPhone(e.currentTarget.value)}
             />
             <TextInput
-              label="Cargo / Área"
+              label="Cargo / Especialidad médica"
+              placeholder="Médico Veterinario Cirujano"
               value={jobTitle}
               onChange={(e) => setJobTitle(e.currentTarget.value)}
             />
           </Group>
-
           <Select
-            label="Rol de Seguridad Asignado"
+            label="Rol de Acceso Asignado"
+            placeholder="Seleccione un rol"
             data={roles.map((r) => ({ value: String(r.id), label: `${r.name} (${r.code})` }))}
             value={roleId}
             onChange={setRoleId}
             required
           />
-
           <Group justify="flex-end" mt="md">
             <Button variant="default" onClick={() => setUserModal(false)}>
               Cancelar
             </Button>
-            <Button color="enterpriseBlue" loading={saving} onClick={handleSaveUser}>
-              {editingUser ? 'Guardar Cambios' : 'Crear Usuario'}
+            <Button color="vetGreen" loading={saving} onClick={handleSaveUser}>
+              {editingUser ? 'Guardar Cambios' : 'Registrar Usuario'}
             </Button>
           </Group>
         </Stack>
       </Modal>
 
-      {/* Reset Password Modal */}
+      {/* Modal: Restablecer Contraseña */}
       <Modal
         opened={resetModal}
         onClose={() => setResetModal(false)}
-        title="Restablecer Contraseña"
-        centered
+        title={`Restablecer Contraseña: ${userToReset?.username}`}
+        size="sm"
       >
         <Stack gap="md">
-          <Text size="sm" c="dimmed">
-            Ingrese la nueva contraseña para el usuario <b>{userToReset?.username}</b>:
+          <Text size="xs" c="dimmed">
+            Ingrese la nueva contraseña de acceso para este usuario. Mínimo 6 caracteres.
           </Text>
           <TextInput
             label="Nueva contraseña"
-            placeholder="Mínimo 6 caracteres"
-            required
+            placeholder="Clave segura temporal"
+            type="password"
             value={newPassword}
             onChange={(e) => setNewPassword(e.currentTarget.value)}
+            required
           />
           <Group justify="flex-end">
             <Button variant="default" onClick={() => setResetModal(false)}>
               Cancelar
             </Button>
-            <Button color="enterpriseBlue" disabled={newPassword.length < 6} onClick={handleResetPassword}>
-              Actualizar Contraseña
+            <Button
+              color="vetGreen"
+              disabled={newPassword.length < 6}
+              onClick={handleResetPassword}
+            >
+              Confirmar Clave
             </Button>
           </Group>
         </Stack>

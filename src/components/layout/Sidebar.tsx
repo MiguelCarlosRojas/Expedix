@@ -1,7 +1,8 @@
-import React from 'react';
-import { NavLink } from 'react-router-dom';
+import React, { useState } from 'react';
+import { NavLink, useLocation } from 'react-router-dom';
 import {
-  Box, Stack, Group, Text, Tooltip, ActionIcon, ScrollArea, Divider
+  Box, Stack, Group, Text, Tooltip, ActionIcon, ScrollArea, Divider,
+  Collapse, UnstyledButton, Badge
 } from '@mantine/core';
 import {
   IconHome,
@@ -9,12 +10,20 @@ import {
   IconFiles,
   IconBrandGoogleDrive,
   IconReportAnalytics,
-  IconBuildingSkyscraper,
+  IconBuildingStore,
   IconShieldLock,
   IconUsers,
   IconChevronLeft,
   IconChevronRight,
+  IconChevronDown,
+  IconChevronUp,
+  IconPaw,
+  IconStethoscope,
   IconFileCertificate,
+  IconTemplate,
+  IconFileSpreadsheet,
+  IconAlertTriangle,
+  IconCloudCheck,
 } from '@tabler/icons-react';
 import { usePermissions } from '../../hooks/usePermissions';
 
@@ -25,71 +34,36 @@ interface SidebarProps {
 
 export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggleCollapse }) => {
   const { hasModuleAccess } = usePermissions();
+  const location = useLocation();
 
-  // EXACT ORDER 1 to 8 REQUIRED
-  const navItems = [
-    {
-      id: 'inicio',
-      label: 'Inicio',
-      path: '/app/inicio',
-      icon: <IconHome size={20} className="sidebar-icon" />,
-      module: 'inicio',
-    },
-    {
-      id: 'dashboard',
-      label: 'Dashboard',
-      path: '/app/dashboard',
-      icon: <IconLayoutDashboard size={20} className="sidebar-icon" />,
-      module: 'dashboard',
-    },
-    {
-      id: 'documentos',
-      label: 'Documentos',
-      path: '/app/documentos',
-      icon: <IconFiles size={20} className="sidebar-icon" />,
-      module: 'documentos',
-    },
-    {
-      id: 'drives',
-      label: 'Drives',
-      path: '/app/drives',
-      icon: <IconBrandGoogleDrive size={20} className="sidebar-icon" />,
-      module: 'drives',
-    },
-    {
-      id: 'reportes',
-      label: 'Reportes',
-      path: '/app/reportes',
-      icon: <IconReportAnalytics size={20} className="sidebar-icon" />,
-      module: 'reportes',
-    },
-    {
-      id: 'administracion',
-      label: 'Administración',
-      path: '/app/administracion',
-      icon: <IconBuildingSkyscraper size={20} className="sidebar-icon" />,
-      module: 'administracion',
-    },
-    {
-      id: 'roles',
-      label: 'Roles y Permisos',
-      path: '/app/roles',
-      icon: <IconShieldLock size={20} className="sidebar-icon" />,
-      module: 'roles',
-    },
-    {
-      id: 'usuarios',
-      label: 'Usuarios',
-      path: '/app/usuarios',
-      icon: <IconUsers size={20} className="sidebar-icon" />,
-      module: 'usuarios',
-    },
+  // Estados de expansión de submenús
+  const isDocActive = location.pathname.startsWith('/app/documentos');
+  const isRepActive = location.pathname.startsWith('/app/reportes');
+
+  const [docsOpened, setDocsOpened] = useState(isDocActive);
+  const [reportsOpened, setReportsOpened] = useState(isRepActive);
+
+  // Submenús de Documentos Veterinarios
+  const docSubItems = [
+    { label: 'Todos los Expedientes', path: '/app/documentos/todos', icon: <IconFiles size={16} /> },
+    { label: 'Historias Clínicas', path: '/app/documentos/historias', icon: <IconPaw size={16} /> },
+    { label: 'Certificados & Altas', path: '/app/documentos/certificados', icon: <IconFileCertificate size={16} /> },
+    { label: 'Plantillas Maestras', path: '/app/documentos/plantillas', icon: <IconTemplate size={16} /> },
+  ];
+
+  // Submenús con los CINCO Reportes Independientes
+  const reportSubItems = [
+    { label: 'R1: Resumen General', path: '/app/reportes/1', icon: <IconReportAnalytics size={16} /> },
+    { label: 'R2: Por Tipo de Plantilla', path: '/app/reportes/2', icon: <IconFileSpreadsheet size={16} /> },
+    { label: 'R3: Productividad Personal', path: '/app/reportes/3', icon: <IconUsers size={16} /> },
+    { label: 'R4: Trazabilidad & Errores', path: '/app/reportes/4', icon: <IconAlertTriangle size={16} /> },
+    { label: 'R5: Almacenamiento Drive', path: '/app/reportes/5', icon: <IconCloudCheck size={16} /> },
   ];
 
   return (
     <Box
       style={{
-        width: collapsed ? 76 : 260,
+        width: collapsed ? 76 : 268,
         height: '100vh',
         position: 'fixed',
         left: 0,
@@ -99,7 +73,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggleCollapse })
         display: 'flex',
         flexDirection: 'column',
         zIndex: 110,
-        transition: 'width 0.25s ease',
+        transition: 'width 0.22s ease-in-out',
+        boxShadow: '1px 0 3px rgba(0,0,0,0.02)',
       }}
     >
       {/* Brand Header */}
@@ -108,22 +83,23 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggleCollapse })
           <Group gap="xs" wrap="nowrap">
             <Box
               style={{
-                background: 'linear-gradient(135deg, #0b7285, #1971c2)',
-                borderRadius: 8,
+                background: 'linear-gradient(135deg, #16a34a, #15803d)',
+                borderRadius: 10,
                 padding: '6px 8px',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
+                boxShadow: '0 2px 6px rgba(22, 163, 74, 0.25)',
               }}
             >
-              <IconFileCertificate size={22} color="#ffffff" />
+              <IconPaw size={22} color="#ffffff" />
             </Box>
             <div>
-              <Text fw={800} size="sm" c="dark.8" style={{ letterSpacing: '0.3px', lineHeight: 1.2 }}>
-                EXPEDIENTES PRO
+              <Text fw={900} size="sm" c="vetGreen.9" style={{ letterSpacing: '0.5px', lineHeight: 1.1 }}>
+                EXPEDIX <span style={{ color: '#16a34a' }}>VET</span>
               </Text>
-              <Text size="10px" c="dimmed" fw={600}>
-                SISTEMA EMPRESARIAL
+              <Text size="10px" c="dimmed" fw={700} style={{ letterSpacing: '0.6px' }}>
+                SALUD & BIENESTAR ANIMAL
               </Text>
             </div>
           </Group>
@@ -133,12 +109,15 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggleCollapse })
           <Box
             mx="auto"
             style={{
-              background: 'linear-gradient(135deg, #0b7285, #1971c2)',
-              borderRadius: 8,
+              background: 'linear-gradient(135deg, #16a34a, #15803d)',
+              borderRadius: 10,
               padding: '6px 8px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
             }}
           >
-            <IconFileCertificate size={22} color="#ffffff" />
+            <IconPaw size={22} color="#ffffff" />
           </Box>
         )}
       </Box>
@@ -147,43 +126,182 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggleCollapse })
 
       {/* Independent Vertical Scroll Nav */}
       <ScrollArea style={{ flex: 1 }} p="xs">
-        <Stack gap={4}>
-          {navItems.map((item, index) => {
-            // Permission check: hide if user lacks access to module
-            if (!hasModuleAccess(item.module)) {
-              return null;
-            }
-
-            const linkContent = (
+        <Stack gap={3}>
+          {/* 1. Inicio */}
+          {hasModuleAccess('inicio') && (
+            <Tooltip label="Inicio" position="right" disabled={!collapsed} withArrow>
               <NavLink
-                to={item.path}
-                className={({ isActive }) =>
-                  `sidebar-link ${isActive ? 'active' : ''}`
-                }
-                style={{
-                  justifyContent: collapsed ? 'center' : 'flex-start',
-                  padding: collapsed ? '12px 0' : '10px 14px',
-                }}
+                to="/app/inicio"
+                className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
+                style={{ justifyContent: collapsed ? 'center' : 'flex-start' }}
               >
-                {item.icon}
-                {!collapsed && (
-                  <Text size="sm" ml="sm" style={{ flex: 1 }}>
-                    {item.label}
-                  </Text>
-                )}
+                <IconHome size={20} className="sidebar-icon" />
+                {!collapsed && <Text size="sm" ml="sm">Inicio</Text>}
               </NavLink>
-            );
+            </Tooltip>
+          )}
 
-            if (collapsed) {
-              return (
-                <Tooltip label={item.label} position="right" withArrow key={item.id}>
-                  <div>{linkContent}</div>
-                </Tooltip>
-              );
-            }
+          {/* 2. Dashboard */}
+          {hasModuleAccess('dashboard') && (
+            <Tooltip label="Dashboard" position="right" disabled={!collapsed} withArrow>
+              <NavLink
+                to="/app/dashboard"
+                className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
+                style={{ justifyContent: collapsed ? 'center' : 'flex-start' }}
+              >
+                <IconLayoutDashboard size={20} className="sidebar-icon" />
+                {!collapsed && <Text size="sm" ml="sm">Dashboard</Text>}
+              </NavLink>
+            </Tooltip>
+          )}
 
-            return <React.Fragment key={item.id}>{linkContent}</React.Fragment>;
-          })}
+          {/* 3. Documentos (Expandible) */}
+          {hasModuleAccess('documentos') && (
+            <Box>
+              <Tooltip label="Documentos" position="right" disabled={!collapsed} withArrow>
+                <UnstyledButton
+                  onClick={() => {
+                    if (collapsed) onToggleCollapse();
+                    setDocsOpened((o) => !o);
+                  }}
+                  className={`sidebar-link ${isDocActive ? 'active' : ''}`}
+                  style={{ width: '100%', justifyContent: collapsed ? 'center' : 'space-between' }}
+                >
+                  <Group gap={0}>
+                    <IconStethoscope size={20} className="sidebar-icon" />
+                    {!collapsed && <Text size="sm" ml="sm">Documentos</Text>}
+                  </Group>
+                  {!collapsed && (
+                    <Box style={{ display: 'flex', alignItems: 'center' }}>
+                      {docsOpened ? <IconChevronUp size={16} /> : <IconChevronDown size={16} />}
+                    </Box>
+                  )}
+                </UnstyledButton>
+              </Tooltip>
+
+              {/* Subopciones de Documentos */}
+              {!collapsed && (
+                <Collapse in={docsOpened}>
+                  <Stack gap={2} pt={2} pb={4}>
+                    {docSubItems.map((sub) => (
+                      <NavLink
+                        key={sub.path}
+                        to={sub.path}
+                        className={({ isActive }) => `sidebar-sublink ${isActive ? 'active' : ''}`}
+                      >
+                        <Group gap="xs">
+                          {sub.icon}
+                          <Text size="xs">{sub.label}</Text>
+                        </Group>
+                      </NavLink>
+                    ))}
+                  </Stack>
+                </Collapse>
+              )}
+            </Box>
+          )}
+
+          {/* 4. Drives */}
+          {hasModuleAccess('drives') && (
+            <Tooltip label="Drives" position="right" disabled={!collapsed} withArrow>
+              <NavLink
+                to="/app/drives"
+                className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
+                style={{ justifyContent: collapsed ? 'center' : 'flex-start' }}
+              >
+                <IconBrandGoogleDrive size={20} className="sidebar-icon" />
+                {!collapsed && <Text size="sm" ml="sm">Drives</Text>}
+              </NavLink>
+            </Tooltip>
+          )}
+
+          {/* 5. Reportes (Expandible con los 5 Reportes!) */}
+          {hasModuleAccess('reportes') && (
+            <Box>
+              <Tooltip label="Reportes" position="right" disabled={!collapsed} withArrow>
+                <UnstyledButton
+                  onClick={() => {
+                    if (collapsed) onToggleCollapse();
+                    setReportsOpened((o) => !o);
+                  }}
+                  className={`sidebar-link ${isRepActive ? 'active' : ''}`}
+                  style={{ width: '100%', justifyContent: collapsed ? 'center' : 'space-between' }}
+                >
+                  <Group gap={0}>
+                    <IconReportAnalytics size={20} className="sidebar-icon" />
+                    {!collapsed && <Text size="sm" ml="sm">Reportes</Text>}
+                  </Group>
+                  {!collapsed && (
+                    <Box style={{ display: 'flex', alignItems: 'center' }}>
+                      {reportsOpened ? <IconChevronUp size={16} /> : <IconChevronDown size={16} />}
+                    </Box>
+                  )}
+                </UnstyledButton>
+              </Tooltip>
+
+              {/* Subopciones de los 5 Reportes */}
+              {!collapsed && (
+                <Collapse in={reportsOpened}>
+                  <Stack gap={2} pt={2} pb={4}>
+                    {reportSubItems.map((sub) => (
+                      <NavLink
+                        key={sub.path}
+                        to={sub.path}
+                        className={({ isActive }) => `sidebar-sublink ${isActive ? 'active' : ''}`}
+                      >
+                        <Group gap="xs">
+                          {sub.icon}
+                          <Text size="xs">{sub.label}</Text>
+                        </Group>
+                      </NavLink>
+                    ))}
+                  </Stack>
+                </Collapse>
+              )}
+            </Box>
+          )}
+
+          {/* 6. Administración */}
+          {hasModuleAccess('administracion') && (
+            <Tooltip label="Administración" position="right" disabled={!collapsed} withArrow>
+              <NavLink
+                to="/app/administracion"
+                className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
+                style={{ justifyContent: collapsed ? 'center' : 'flex-start' }}
+              >
+                <IconBuildingStore size={20} className="sidebar-icon" />
+                {!collapsed && <Text size="sm" ml="sm">Administración</Text>}
+              </NavLink>
+            </Tooltip>
+          )}
+
+          {/* 7. Roles y Permisos */}
+          {hasModuleAccess('roles') && (
+            <Tooltip label="Roles y Permisos" position="right" disabled={!collapsed} withArrow>
+              <NavLink
+                to="/app/roles"
+                className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
+                style={{ justifyContent: collapsed ? 'center' : 'flex-start' }}
+              >
+                <IconShieldLock size={20} className="sidebar-icon" />
+                {!collapsed && <Text size="sm" ml="sm">Roles y Permisos</Text>}
+              </NavLink>
+            </Tooltip>
+          )}
+
+          {/* 8. Usuarios */}
+          {hasModuleAccess('usuarios') && (
+            <Tooltip label="Usuarios" position="right" disabled={!collapsed} withArrow>
+              <NavLink
+                to="/app/usuarios"
+                className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
+                style={{ justifyContent: collapsed ? 'center' : 'flex-start' }}
+              >
+                <IconUsers size={20} className="sidebar-icon" />
+                {!collapsed && <Text size="sm" ml="sm">Usuarios</Text>}
+              </NavLink>
+            </Tooltip>
+          )}
         </Stack>
       </ScrollArea>
 

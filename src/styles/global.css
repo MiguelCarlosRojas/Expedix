@@ -6,23 +6,25 @@
 /* Univer Styles */
 @import '@univerjs/preset-sheets-core/lib/index.css';
 
-/* Custom Enterprise Scrollbars */
+/* -------------------------------------------------------------------------- */
+/* Custom Veterinary Theme Scrollbars & Base Styles                           */
+/* -------------------------------------------------------------------------- */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #f1f3f5;
+  background: #f1f5f9;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #ced4da;
+  background: #cbd5e1;
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #adb5bd;
+  background: #94a3b8;
 }
 
 body {
@@ -31,40 +33,159 @@ body {
   background-color: #f8fafc;
   color: #1e293b;
   font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+  -webkit-font-smoothing: antialiased;
 }
 
-/* Sidebar Active Indicator */
+/* -------------------------------------------------------------------------- */
+/* Keyframe Animations                                                        */
+/* -------------------------------------------------------------------------- */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulseSubtle {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.03);
+    opacity: 0.92;
+  }
+}
+
+@keyframes floatGentle {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+.anim-fade-in {
+  animation: fadeIn 0.3s ease-out forwards;
+}
+
+.anim-pulse {
+  animation: pulseSubtle 3s ease-in-out infinite;
+}
+
+.anim-float {
+  animation: floatGentle 4s ease-in-out infinite;
+}
+
+/* Respeto a usuarios con reducción de movimiento */
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* -------------------------------------------------------------------------- */
+/* Sidebar Animalista & Veterinary Navigation                                 */
+/* -------------------------------------------------------------------------- */
 .sidebar-link {
   display: flex;
   align-items: center;
   padding: 10px 14px;
-  border-radius: 8px;
+  border-radius: 10px;
   color: #475569;
   text-decoration: none;
-  font-size: 14px;
+  font-size: 13.5px;
   font-weight: 500;
-  transition: all 0.2s ease;
-  margin-bottom: 4px;
+  transition: all 0.18s ease;
+  margin-bottom: 3px;
+  position: relative;
 }
 
 .sidebar-link:hover {
-  background-color: #f1f5f9;
-  color: #0f172a;
+  background-color: #f0fdf4;
+  color: #15803d;
+  transform: translateX(2px);
 }
 
 .sidebar-link.active {
-  background-color: #e0f2fe;
-  color: #0369a1;
+  background-color: #dcfce7;
+  color: #166534;
   font-weight: 600;
 }
 
 .sidebar-link.active .sidebar-icon {
-  color: #0284c7;
+  color: #16a34a;
 }
 
-/* Header elevation */
+/* Submenu links */
+.sidebar-sublink {
+  display: flex;
+  align-items: center;
+  padding: 8px 12px 8px 36px;
+  border-radius: 8px;
+  color: #64748b;
+  text-decoration: none;
+  font-size: 12.5px;
+  font-weight: 500;
+  transition: all 0.15s ease;
+  margin-bottom: 2px;
+}
+
+.sidebar-sublink:hover {
+  background-color: #f0fdf4;
+  color: #15803d;
+}
+
+.sidebar-sublink.active {
+  background-color: #dcfce7;
+  color: #15803d;
+  font-weight: 600;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Interactive Cards & Buttons Feedback                                       */
+/* -------------------------------------------------------------------------- */
+.interactive-card {
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease !important;
+}
+
+.interactive-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 20px -5px rgba(22, 163, 74, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.04) !important;
+  border-color: #bbf7d0 !important;
+}
+
+/* Header */
 .app-header {
   border-bottom: 1px solid #e2e8f0;
-  background-color: #ffffff;
+  background-color: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(8px);
   z-index: 100;
+}
+
+/* Sortable Table Headers */
+.sortable-th {
+  cursor: pointer;
+  user-select: none;
+  transition: background-color 0.15s ease, color 0.15s ease;
+  padding: 10px 12px !important;
+}
+
+.sortable-th:hover {
+  background-color: #f1f5f9;
+  color: #15803d;
+}
+
+.sortable-th-active {
+  color: #15803d !important;
+  font-weight: 700 !important;
+  background-color: #f0fdf4;
 }

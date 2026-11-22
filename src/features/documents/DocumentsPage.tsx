@@ -1,14 +1,15 @@
-import React, { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import React, { useState, useEffect, useMemo } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import {
   Box, Tabs, Table, Text, Group, Button, TextInput, Select, Badge,
   ActionIcon, Card, Modal, Stepper, Stack, Paper, Title, Divider,
-  Tooltip, Loader, Alert, SimpleGrid, ThemeIcon
+  Tooltip, Alert, SimpleGrid, ThemeIcon, ScrollArea
 } from '@mantine/core';
 import {
   IconPlus, IconSearch, IconFilter, IconFileSpark, IconDownload,
   IconEye, IconTrash, IconTemplate, IconRefresh, IconCheck, IconAlertTriangle,
-  IconExternalLink, IconCopy, IconTool, IconFiles, IconBrandGoogleDrive
+  IconExternalLink, IconCopy, IconTool, IconFiles, IconBrandGoogleDrive,
+  IconPaw, IconStethoscope, IconFileCertificate, IconFilterOff
 } from '@tabler/icons-react';
 import { api } from '../../services/api';
 import { Expediente, DocumentTemplate, DynamicField } from '../../types';
@@ -16,20 +17,31 @@ import { CustomBadge } from '../../components/ui/CustomBadge';
 import { DynamicForm } from '../../components/forms/DynamicForm';
 import { FormBuilder } from '../../components/forms/FormBuilder';
 import { notifications } from '@mantine/notifications';
+import { useUrlFilters } from '../../hooks/useUrlFilters';
+import { useSortableData } from '../../hooks/useSortableData';
+import { SortableTh } from '../../components/ui/SortableTh';
+import { TableSkeleton } from '../../components/ui/SkeletonLoaders';
+import { EmptyState } from '../../components/ui/EmptyState';
+import { ErrorState } from '../../components/ui/ErrorState';
 
 export const DocumentsPage: React.FC = () => {
-  const [searchParams] = useSearchParams();
-  const initialTab = searchParams.get('tab') === 'templates' ? 'templates' : 'expedientes';
+  const { category } = useParams<{ category?: string }>();
+  const navigate = useNavigate();
+  const { getFilter, setFilter, setFilters, clearFilters } = useUrlFilters();
 
-  const [activeTab, setActiveTab] = useState<string | null>(initialTab);
+  // Mapeo de categoría desde ruta URL o parámetro query
+  const activeCategory = category || getFilter('categoria', 'todos');
+  const activeTab = activeCategory === 'plantillas' ? 'templates' : 'expedientes';
+
   const [expedientes, setExpedientes] = useState<Expediente[]>([]);
   const [templates, setTemplates] = useState<DocumentTemplate[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Filters
-  const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string | null>(null);
-  const [templateFilter, setTemplateFilter] = useState<string | null>(null);
+  // Filtros sincronizados con Query Parameters
+  const search = getFilter('search', '');
+  const statusFilter = getFilter('estado', '');
+  const templateFilter = getFilter('template', '');
 
   // Modals state
   const [wizardOpened, setWizardOpened] = useState(false);
@@ -52,6 +64,7 @@ export const DocumentsPage: React.FC = () => {
   const fetchExpedientes = async () => {
     try {
       setLoading(true);
+      setError(null);
       const params = new URLSearchParams();
       if (search) params.append('search', search);
       if (statusFilter) params.append('estado', statusFilter);
@@ -60,8 +73,8 @@ export const DocumentsPage: React.FC = () => {
       const res = await api.get<{ results: Expediente[] } | Expediente[]>(`/documents/?${params.toString()}`);
       const items = Array.isArray(res.data) ? res.data : (res.data.results || []);
       setExpedientes(items);
-    } catch (e) {
-      notifications.show({ title: 'Error', message: 'No se pudieron cargar los expedientes.', color: 'red' });
+    } catch (e: any) {
+      setError(e.response?.data?.detail || 'No se pudieron consultar los expedientes.');
     } finally {
       setLoading(false);
     }
@@ -80,15 +93,35 @@ export const DocumentsPage: React.FC = () => {
   useEffect(() => {
     fetchExpedientes();
     fetchTemplates();
-  }, [search, statusFilter, templateFilter]);
+  }, [search, statusFilter, templateFilter, activeCategory]);
 
-  // Handle URL action parameters (e.g., from Inicio shortcuts)
-  useEffect(() => {
-    const action = searchParams.get('action');
-    if (action === 'new' || action === 'generate') {
-      handleOpenWizard();
+  // Filtrado por categoría especializada
+  const filteredExpedientes = useMemo(() => {
+    if (activeCategory === 'historias') {
+      return expedientes.filter(
+        (e) => e.asunto.toLowerCase().includes('historia') ||
+               e.asunto.toLowerCase().includes('clínica') ||
+               e.template_details?.nombre.toLowerCase().includes('historia') ||
+               e.template_details?.tipo === 'INFORME'
+      );
     }
-  }, [searchParams, templates]);
+    if (activeCategory === 'certificados') {
+      return expedientes.filter(
+        (e) => e.asunto.toLowerCase().includes('certificado') ||
+               e.asunto.toLowerCase().includes('alta') ||
+               e.asunto.toLowerCase().includes('consentimiento') ||
+               e.template_details?.tipo === 'CONSTANCIA' ||
+               e.template_details?.tipo === 'ACTA'
+      );
+    }
+    return expedientes;
+  }, [expedientes, activeCategory]);
+
+  // Hook de ordenamiento universal para tabla de expedientes
+  const { sortedData: sortedExpedientes, sortConfig, requestSort } = useSortableData(filteredExpedientes, 'created_at', 'desc');
+
+  // Hook de ordenamiento para tabla de plantillas
+  const { sortedData: sortedTemplates, sortConfig: templateSortConfig, requestSort: requestTemplateSort } = useSortableData(templates, 'nombre', 'asc');
 
   const handleOpenWizard = () => {
     setWizardStep(0);
@@ -104,27 +137,25 @@ export const DocumentsPage: React.FC = () => {
     if (!selectedTemplate) return;
     setGenerating(true);
     try {
-      // 1. Create Expediente
       const createRes = await api.post('/documents/', {
         asunto: asunto || `Expediente de ${selectedTemplate.nombre}`,
-        solicitante: solicitante || 'Beneficiario Central',
+        solicitante: solicitante || 'Beneficiario / Paciente General',
         template: selectedTemplate.id,
         dynamic_values: dynamicValues,
       });
 
       const newExp = createRes.data;
 
-      // 2. Trigger automated compilation & PDF generation
       const genRes = await api.post(`/documents/${newExp.id}/generate_document/`, {
         dynamic_values: dynamicValues,
       });
 
       setGenerationResult(genRes.data.expediente);
-      setWizardStep(3); // Result step
+      setWizardStep(3);
       fetchExpedientes();
       notifications.show({
-        title: 'Generación Exitosa',
-        message: `El documento ${genRes.data.expediente.numero_expediente} fue compilado y guardado en Drive.`,
+        title: 'Documento Veterinario Generado',
+        message: `El expediente ${genRes.data.expediente.numero_expediente} fue compilado y certificado con éxito.`,
         color: 'teal',
         icon: <IconCheck size={18} />,
       });
@@ -144,7 +175,7 @@ export const DocumentsPage: React.FC = () => {
   const handleDuplicateTemplate = async (templateId: number) => {
     try {
       await api.post(`/templates/${templateId}/duplicate/`);
-      notifications.show({ title: 'Plantilla duplicada', message: 'Copia creada exitosamente.', color: 'teal' });
+      notifications.show({ title: 'Plantilla duplicada', message: 'Copia veterinaria creada exitosamente.', color: 'teal' });
       fetchTemplates();
     } catch (e) {
       notifications.show({ title: 'Error', message: 'No se pudo duplicar la plantilla.', color: 'red' });
@@ -160,31 +191,71 @@ export const DocumentsPage: React.FC = () => {
     }
   };
 
+  const categoryTitles: Record<string, { title: string; desc: string; icon: React.ReactNode }> = {
+    todos: {
+      title: 'Todos los Expedientes Veterinarios',
+      desc: 'Registro integral de expedientes clínicos, certificaciones médicas y trámites institucionales.',
+      icon: <IconFiles size={24} color="#16a34a" />,
+    },
+    historias: {
+      title: 'Historias Clínicas & Fichas Médicas',
+      desc: 'Atención médica de pacientes animales, diagnósticos, evolución clínica y tratamientos prescritos.',
+      icon: <IconPaw size={24} color="#16a34a" />,
+    },
+    certificados: {
+      title: 'Certificados de Salud & Consentimientos',
+      desc: 'Certificaciones sanitarias oficiales, actas de alta hospitalaria y autorizaciones quirúrgicas.',
+      icon: <IconFileCertificate size={24} color="#16a34a" />,
+    },
+    plantillas: {
+      title: 'Plantillas Maestras & Form Builder',
+      desc: 'Diseño y versionado de plantillas documentales con 14 tipos de campos dinámicos.',
+      icon: <IconTemplate size={24} color="#16a34a" />,
+    },
+  };
+
+  const currentCatInfo = categoryTitles[activeCategory] || categoryTitles.todos;
+
   return (
-    <Box>
-      <Tabs value={activeTab} onChange={setActiveTab}>
-        <Group justify="space-between" mb="lg">
-          <Tabs.List>
-            <Tabs.Tab value="expedientes" leftSection={<IconFiles size={18} />}>
-              Expedientes Electrónicos
-            </Tabs.Tab>
-            <Tabs.Tab value="templates" leftSection={<IconTemplate size={18} />}>
-              Plantillas Maestras ({templates.length})
-            </Tabs.Tab>
-          </Tabs.List>
+    <Box className="anim-fade-in">
+      {/* Título de la Sección con Identidad Veterinaria */}
+      <Box mb="lg">
+        <Group justify="space-between" align="flex-start" wrap="wrap">
+          <div>
+            <Group gap="xs" mb={4}>
+              <Badge color="vetGreen" variant="light" size="sm">
+                Gestión Clínica & Documental
+              </Badge>
+              <Badge color="gray" variant="outline" size="sm">
+                {activeCategory.toUpperCase()}
+              </Badge>
+            </Group>
+            <Title order={2} fw={800} c="dark.8">
+              {currentCatInfo.title}
+            </Title>
+            <Text c="dimmed" size="sm" mt={2}>
+              {currentCatInfo.desc}
+            </Text>
+          </div>
 
           <Group gap="sm">
             {activeTab === 'expedientes' ? (
               <Button
-                color="enterpriseBlue"
+                color="vetGreen"
                 leftSection={<IconFileSpark size={18} />}
                 onClick={handleOpenWizard}
+                styles={{
+                  root: {
+                    background: 'linear-gradient(135deg, #16a34a 0%, #15803d 100%)',
+                    boxShadow: '0 2px 8px rgba(22, 163, 74, 0.25)',
+                  },
+                }}
               >
-                Generar Documento
+                Generar Expediente
               </Button>
             ) : (
               <Button
-                color="enterpriseBlue"
+                color="vetGreen"
                 leftSection={<IconPlus size={18} />}
                 onClick={() => {
                   if (templates.length > 0) {
@@ -193,503 +264,501 @@ export const DocumentsPage: React.FC = () => {
                   }
                 }}
               >
-                Constructor de Campos
+                Nuevo Campo Dinámico
               </Button>
             )}
           </Group>
         </Group>
+      </Box>
 
-        {/* TAB 1: EXPEDIENTES ELECTRÓNICOS */}
-        <Tabs.Panel value="expedientes">
-          {/* Filters Bar */}
-          <Paper p="md" mb="md" withBorder radius="md" bg="white">
-            <Group justify="space-between">
-              <Group style={{ flex: 1 }}>
+      {/* Tabs Principales de Navegación */}
+      <Tabs
+        value={activeTab}
+        onChange={(val) => {
+          if (val === 'templates') {
+            navigate('/app/documentos/plantillas');
+          } else {
+            navigate('/app/documentos/todos');
+          }
+        }}
+        mb="md"
+      >
+        <Tabs.List>
+          <Tabs.Tab value="expedientes" leftSection={<IconFiles size={16} />}>
+            Expedientes ({filteredExpedientes.length})
+          </Tabs.Tab>
+          <Tabs.Tab value="templates" leftSection={<IconTemplate size={16} />}>
+            Plantillas Maestras ({templates.length})
+          </Tabs.Tab>
+        </Tabs.List>
+      </Tabs>
+
+      {/* ==================================================================== */}
+      {/* PESTAÑA 1: LISTADO DE EXPEDIENTES                                    */}
+      {/* ==================================================================== */}
+      {activeTab === 'expedientes' && (
+        <Stack gap="md">
+          {/* Barra de Filtros Sincronizada con la URL */}
+          <Paper p="md" radius="md" withBorder bg="white" shadow="xs">
+            <Group justify="space-between" wrap="wrap">
+              <Group gap="sm" style={{ flex: 1, minWidth: 260 }}>
                 <TextInput
-                  placeholder="Buscar por N° expediente, asunto o solicitante..."
-                  leftSection={<IconSearch size={16} />}
+                  placeholder="Buscar por N° expediente, paciente o diagnóstico..."
+                  leftSection={<IconSearch size={16} color="#16a34a" />}
                   value={search}
-                  onChange={(e) => setSearch(e.currentTarget.value)}
-                  style={{ width: 320 }}
+                  onChange={(e) => setFilter('search', e.currentTarget.value)}
+                  style={{ flex: 1, minWidth: 240 }}
                   size="sm"
+                  radius="md"
                 />
-
                 <Select
-                  placeholder="Filtrar por estado"
+                  placeholder="Estado"
                   data={[
                     { value: '', label: 'Todos los estados' },
-                    { value: 'GENERADO', label: 'Generados' },
-                    { value: 'PENDIENTE', label: 'Pendientes' },
+                    { value: 'PENDIENTE', label: 'Pendiente' },
                     { value: 'EN_PROCESO', label: 'En Proceso' },
-                    { value: 'ERROR', label: 'Con Errores' },
-                    { value: 'OBSERVADO', label: 'Observados' },
+                    { value: 'GENERADO', label: 'Generado' },
+                    { value: 'ERROR', label: 'Error' },
+                    { value: 'OBSERVADO', label: 'Observado' },
                   ]}
-                  value={statusFilter || ''}
-                  onChange={(val) => setStatusFilter(val || null)}
+                  value={statusFilter}
+                  onChange={(val) => setFilter('estado', val || '')}
                   clearable
+                  style={{ width: 170 }}
                   size="sm"
+                  radius="md"
                 />
-
                 <Select
-                  placeholder="Filtrar por plantilla"
-                  data={templates.map((t) => ({ value: String(t.id), label: t.nombre }))}
-                  value={templateFilter || ''}
-                  onChange={(val) => setTemplateFilter(val || null)}
+                  placeholder="Plantilla"
+                  data={[
+                    { value: '', label: 'Todas las plantillas' },
+                    ...templates.map((t) => ({ value: String(t.id), label: t.nombre })),
+                  ]}
+                  value={templateFilter}
+                  onChange={(val) => setFilter('template', val || '')}
                   clearable
+                  style={{ width: 220 }}
                   size="sm"
+                  radius="md"
                 />
+                <ActionIcon
+                  variant="light"
+                  color="vetGreen"
+                  size="lg"
+                  onClick={fetchExpedientes}
+                  title="Refrescar expedientes"
+                >
+                  <IconRefresh size={18} />
+                </ActionIcon>
+                {(search || statusFilter || templateFilter) && (
+                  <Button
+                    variant="subtle"
+                    color="gray"
+                    size="xs"
+                    leftSection={<IconFilterOff size={14} />}
+                    onClick={() => clearFilters(['categoria'])}
+                  >
+                    Limpiar
+                  </Button>
+                )}
               </Group>
 
-              <ActionIcon variant="light" color="gray" size="lg" onClick={fetchExpedientes} title="Refrescar">
-                <IconRefresh size={18} />
-              </ActionIcon>
+              <Text size="xs" c="dimmed">
+                {sortedExpedientes.length} expedientes encontrados
+              </Text>
             </Group>
           </Paper>
 
-          {/* Table */}
-          <Card p={0} radius="md" withBorder bg="white">
-            <Table highlightOnHover verticalSpacing="sm">
+          {/* Estado de Error o Skeleton */}
+          {error && <ErrorState message={error} onRetry={fetchExpedientes} />}
+
+          {loading && !error && <TableSkeleton rows={6} columns={6} />}
+
+          {/* Tabla de Expedientes con Ordenamiento en TODAS las Columnas */}
+          {!loading && !error && (
+            <Paper p="md" radius="md" withBorder bg="white" shadow="xs" style={{ overflowX: 'auto' }}>
+              {sortedExpedientes.length === 0 ? (
+                <EmptyState
+                  title="No se encontraron expedientes"
+                  description="No hay registros que coincidan con los filtros aplicados o aún no se han generado documentos en esta categoría."
+                  actionText="Nuevo Expediente Veterinario"
+                  onAction={handleOpenWizard}
+                />
+              ) : (
+                <Table highlightOnHover withTableBorder withColumnBorders>
+                  <Table.Thead bg="gray.0">
+                    <Table.Tr>
+                      <SortableTh columnKey="numero_expediente" sortConfig={sortConfig} onSort={requestSort} width={150}>
+                        N° Expediente
+                      </SortableTh>
+                      <SortableTh columnKey="solicitante" sortConfig={sortConfig} onSort={requestSort}>
+                        Paciente / Solicitante
+                      </SortableTh>
+                      <SortableTh columnKey="asunto" sortConfig={sortConfig} onSort={requestSort}>
+                        Asunto / Diagnóstico
+                      </SortableTh>
+                      <SortableTh columnKey="template_details" sortConfig={sortConfig} onSort={requestSort}>
+                        Plantilla Clínica
+                      </SortableTh>
+                      <SortableTh columnKey="estado" sortConfig={sortConfig} onSort={requestSort} align="center" width={130}>
+                        Estado
+                      </SortableTh>
+                      <SortableTh columnKey="created_at" sortConfig={sortConfig} onSort={requestSort} width={140}>
+                        Fecha Creación
+                      </SortableTh>
+                      <Table.Th style={{ textAlign: 'center', width: 120 }}>Acciones</Table.Th>
+                    </Table.Tr>
+                  </Table.Thead>
+                  <Table.Tbody>
+                    {sortedExpedientes.map((exp) => (
+                      <Table.Tr key={exp.id}>
+                        <Table.Td p="sm">
+                          <Text fw={700} size="xs" c="vetGreen.8">
+                            {exp.numero_expediente}
+                          </Text>
+                        </Table.Td>
+                        <Table.Td p="sm">
+                          <Group gap="xs">
+                            <IconPaw size={14} color="#16a34a" />
+                            <Text size="sm" fw={600} c="dark.7">
+                              {exp.solicitante}
+                            </Text>
+                          </Group>
+                        </Table.Td>
+                        <Table.Td p="sm">
+                          <Text size="sm" lineClamp={1}>
+                            {exp.asunto}
+                          </Text>
+                        </Table.Td>
+                        <Table.Td p="sm">
+                          <Badge size="sm" variant="light" color="gray">
+                            {exp.template_details?.nombre || 'General'}
+                          </Badge>
+                        </Table.Td>
+                        <Table.Td p="sm" style={{ textAlign: 'center' }}>
+                          <CustomBadge status={exp.estado} />
+                        </Table.Td>
+                        <Table.Td p="sm">
+                          <Text size="xs" c="dimmed">
+                            {exp.created_at ? exp.created_at.split('T')[0] : 'N/A'}
+                          </Text>
+                        </Table.Td>
+                        <Table.Td p="sm">
+                          <Group justify="center" gap={4}>
+                            {exp.pdf_url ? (
+                              <Tooltip label="Descargar PDF oficial">
+                                <ActionIcon
+                                  variant="subtle"
+                                  color="red"
+                                  size="sm"
+                                  component="a"
+                                  href={exp.pdf_url}
+                                  target="_blank"
+                                >
+                                  <IconDownload size={16} />
+                                </ActionIcon>
+                              </Tooltip>
+                            ) : (
+                              <Tooltip label="Compilar documento">
+                                <ActionIcon
+                                  variant="subtle"
+                                  color="vetGreen"
+                                  size="sm"
+                                  onClick={async () => {
+                                    try {
+                                      await api.post(`/documents/${exp.id}/generate_document/`);
+                                      notifications.show({ title: 'Generando', message: 'Iniciando compilación...', color: 'teal' });
+                                      fetchExpedientes();
+                                    } catch (e) {
+                                      // ignore
+                                    }
+                                  }}
+                                >
+                                  <IconFileSpark size={16} />
+                                </ActionIcon>
+                              </Tooltip>
+                            )}
+
+                            {exp.google_doc_url && (
+                              <Tooltip label="Abrir copia Google Docs">
+                                <ActionIcon
+                                  variant="subtle"
+                                  color="blue"
+                                  size="sm"
+                                  component="a"
+                                  href={exp.google_doc_url}
+                                  target="_blank"
+                                >
+                                  <IconExternalLink size={16} />
+                                </ActionIcon>
+                              </Tooltip>
+                            )}
+                          </Group>
+                        </Table.Td>
+                      </Table.Tr>
+                    ))}
+                  </Table.Tbody>
+                </Table>
+              )}
+            </Paper>
+          )}
+        </Stack>
+      )}
+
+      {/* ==================================================================== */}
+      {/* PESTAÑA 2: GESTOR DE PLANTILLAS MAESTRAS                              */}
+      {/* ==================================================================== */}
+      {activeTab === 'templates' && (
+        <Stack gap="md">
+          <Paper p="md" radius="md" withBorder bg="white" shadow="xs" style={{ overflowX: 'auto' }}>
+            <Table highlightOnHover withTableBorder withColumnBorders>
               <Table.Thead bg="gray.0">
                 <Table.Tr>
-                  <Table.Th>N° Expediente</Table.Th>
-                  <Table.Th>Asunto / Título</Table.Th>
-                  <Table.Th>Plantilla</Table.Th>
-                  <Table.Th>Fecha Creación</Table.Th>
-                  <Table.Th>Responsable</Table.Th>
-                  <Table.Th>Estado</Table.Th>
-                  <Table.Th>Drive</Table.Th>
-                  <Table.Th>PDF</Table.Th>
-                  <Table.Th style={{ textAlign: 'right' }}>Acciones</Table.Th>
+                  <SortableTh columnKey="nombre" sortConfig={templateSortConfig} onSort={requestTemplateSort}>
+                    Nombre de Plantilla
+                  </SortableTh>
+                  <SortableTh columnKey="tipo" sortConfig={templateSortConfig} onSort={requestTemplateSort} width={180}>
+                    Tipo Documental
+                  </SortableTh>
+                  <SortableTh columnKey="version" sortConfig={templateSortConfig} onSort={requestTemplateSort} align="center" width={110}>
+                    Versión
+                  </SortableTh>
+                  <SortableTh columnKey="is_active" sortConfig={templateSortConfig} onSort={requestTemplateSort} align="center" width={120}>
+                    Estado
+                  </SortableTh>
+                  <Table.Th style={{ textAlign: 'center', width: 180 }}>Acciones</Table.Th>
                 </Table.Tr>
               </Table.Thead>
               <Table.Tbody>
-                {loading ? (
-                  <Table.Tr>
-                    <Table.Td colSpan={9} style={{ textAlign: 'center', padding: 30 }}>
-                      <Loader size="sm" />
-                      <Text size="xs" c="dimmed" mt="xs">Cargando expedientes electrónicos...</Text>
+                {sortedTemplates.map((t) => (
+                  <Table.Tr key={t.id}>
+                    <Table.Td p="sm">
+                      <Group gap="xs">
+                        <ThemeIcon size={28} radius="md" color="vetGreen" variant="light">
+                          <IconTemplate size={16} color="#16a34a" />
+                        </ThemeIcon>
+                        <div>
+                          <Text size="sm" fw={700} c="dark.8">
+                            {t.nombre}
+                          </Text>
+                          <Text size="xs" c="dimmed" lineClamp={1}>
+                            {t.descripcion || 'Plantilla oficial estandarizada'}
+                          </Text>
+                        </div>
+                      </Group>
                     </Table.Td>
-                  </Table.Tr>
-                ) : expedientes.length === 0 ? (
-                  <Table.Tr>
-                    <Table.Td colSpan={9} style={{ textAlign: 'center', padding: 40 }}>
-                      <Text size="sm" c="dimmed">No se encontraron expedientes con los criterios seleccionados.</Text>
+                    <Table.Td p="sm">
+                      <Badge size="sm" variant="outline" color="vetGreen">
+                        {t.tipo}
+                      </Badge>
                     </Table.Td>
-                  </Table.Tr>
-                ) : (
-                  expedientes.map((exp) => (
-                    <Table.Tr key={exp.id}>
-                      <Table.Td fw={700} c="enterpriseBlue.8">
-                        {exp.numero_expediente}
-                      </Table.Td>
-                      <Table.Td>
-                        <Text size="sm" fw={500} lineClamp={1}>{exp.asunto}</Text>
-                        <Text size="xs" c="dimmed">Sol: {exp.solicitante}</Text>
-                      </Table.Td>
-                      <Table.Td>
-                        <Text size="xs" fw={500}>{exp.template_details?.nombre || 'General'}</Text>
-                        <Badge size="xs" variant="outline" color="gray">{exp.template_details?.tipo || 'DOC'}</Badge>
-                      </Table.Td>
-                      <Table.Td>
-                        <Text size="xs" c="dimmed">
-                          {new Date(exp.created_at).toLocaleDateString()}
-                        </Text>
-                      </Table.Td>
-                      <Table.Td>
-                        <Text size="xs">
-                          {exp.responsable_name || 'Sistema Central'}
-                        </Text>
-                      </Table.Td>
-                      <Table.Td>
-                        <CustomBadge status={exp.estado} />
-                      </Table.Td>
-                      <Table.Td>
-                        <Tooltip label={`Carpeta: ${exp.drive_folder_name || 'Expedientes Emitidos'}`}>
-                          <Badge color="green" variant="light" size="xs" leftSection={<IconBrandGoogleDrive size={12} />}>
-                            Drive
-                          </Badge>
-                        </Tooltip>
-                      </Table.Td>
-                      <Table.Td>
-                        {exp.pdf_url ? (
-                          <Button
-                            component="a"
-                            href={exp.pdf_url}
-                            target="_blank"
-                            size="compact-xs"
+                    <Table.Td p="sm" style={{ textAlign: 'center' }}>
+                      <Badge size="xs" variant="filled" color="gray">
+                        v{t.version}
+                      </Badge>
+                    </Table.Td>
+                    <Table.Td p="sm" style={{ textAlign: 'center' }}>
+                      <Badge size="sm" color={t.is_active ? 'green' : 'gray'} variant="light">
+                        {t.is_active ? 'Activa' : 'Inactiva'}
+                      </Badge>
+                    </Table.Td>
+                    <Table.Td p="sm">
+                      <Group justify="center" gap={6}>
+                        <Tooltip label="Constructor de campos">
+                          <ActionIcon
                             variant="light"
-                            color="red"
-                            leftSection={<IconDownload size={12} />}
+                            color="vetGreen"
+                            size="sm"
+                            onClick={() => {
+                              setTemplateForBuilder(t);
+                              setBuilderOpened(true);
+                            }}
                           >
-                            PDF
-                          </Button>
-                        ) : (
-                          <Text size="xs" c="dimmed">-</Text>
-                        )}
-                      </Table.Td>
-                      <Table.Td style={{ textAlign: 'right' }}>
-                        <Group gap={4} justify="flex-end">
-                          {exp.estado !== 'GENERADO' && (
-                            <Tooltip label="Compilar y Generar Documento">
-                              <ActionIcon
-                                color="teal"
-                                variant="light"
-                                size="sm"
-                                onClick={async () => {
-                                  try {
-                                    notifications.show({ title: 'Generando...', message: 'Compilando documento en Drive.', color: 'blue' });
-                                    await api.post(`/documents/${exp.id}/generate_document/`);
-                                    fetchExpedientes();
-                                    notifications.show({ title: 'Generado', message: 'Documento completado.', color: 'teal' });
-                                  } catch (e: any) {
-                                    notifications.show({ title: 'Observación', message: e.response?.data?.detail || 'Error', color: 'red' });
-                                    fetchExpedientes();
-                                  }
-                                }}
-                              >
-                                <IconFileSpark size={16} />
-                              </ActionIcon>
-                            </Tooltip>
-                          )}
-
-                          <Tooltip label="Descargar PDF Oficial">
-                            <ActionIcon
-                              component="a"
-                              href={`/api/v1/documents/${exp.id}/download_pdf/`}
-                              target="_blank"
-                              color="blue"
-                              variant="subtle"
-                              size="sm"
-                            >
-                              <IconDownload size={16} />
-                            </ActionIcon>
-                          </Tooltip>
-                        </Group>
-                      </Table.Td>
-                    </Table.Tr>
-                  ))
-                )}
+                            <IconTool size={16} />
+                          </ActionIcon>
+                        </Tooltip>
+                        <Tooltip label="Previsualizar">
+                          <ActionIcon
+                            variant="light"
+                            color="blue"
+                            size="sm"
+                            onClick={() => {
+                              setPreviewTemplate(t);
+                              setPreviewOpened(true);
+                            }}
+                          >
+                            <IconEye size={16} />
+                          </ActionIcon>
+                        </Tooltip>
+                        <Tooltip label="Clonar plantilla">
+                          <ActionIcon
+                            variant="light"
+                            color="gray"
+                            size="sm"
+                            onClick={() => handleDuplicateTemplate(t.id)}
+                          >
+                            <IconCopy size={16} />
+                          </ActionIcon>
+                        </Tooltip>
+                      </Group>
+                    </Table.Td>
+                  </Table.Tr>
+                ))}
               </Table.Tbody>
             </Table>
-          </Card>
-        </Tabs.Panel>
+          </Paper>
+        </Stack>
+      )}
 
-        {/* TAB 2: PLANTILLAS MAESTRAS */}
-        <Tabs.Panel value="templates">
-          <SimpleGrid cols={{ base: 1, md: 2 }} spacing="lg">
-            {templates.map((tpl) => (
-              <Card key={tpl.id} p="lg" radius="md" withBorder bg="white">
-                <Group justify="space-between" mb="xs">
-                  <Badge color="enterpriseBlue" size="md">
-                    {tpl.tipo}
-                  </Badge>
-                  <Group gap="xs">
-                    <Badge color={tpl.is_active ? 'teal' : 'gray'} variant="light" size="sm">
-                      {tpl.is_active ? 'Activa' : 'Inactiva'}
-                    </Badge>
-                    <Badge color="dark" variant="outline" size="sm">
-                      v{tpl.version}
-                    </Badge>
-                  </Group>
-                </Group>
-
-                <Text fw={700} size="md" c="dark.8" mb={4}>
-                  {tpl.nombre}
-                </Text>
-                <Text size="xs" c="dimmed" mb="md" lineClamp={2}>
-                  {tpl.descripcion}
-                </Text>
-
-                <Paper p="xs" bg="gray.0" radius="sm" mb="md">
-                  <Text size="11px" c="dimmed">
-                    Nomenclatura: <Text span fw={600} ff="monospace" c="dark.7">{tpl.naming_pattern}</Text>
-                  </Text>
-                  <Text size="11px" c="dimmed">
-                    Campos dinámicos: <Text span fw={600} c="dark.7">{tpl.fields?.length || tpl.fields_count || 0}</Text> configurados
-                  </Text>
-                </Paper>
-
-                <Group justify="space-between" mt="auto">
-                  <Button
-                    size="xs"
-                    variant="light"
-                    color="enterpriseBlue"
-                    leftSection={<IconTool size={14} />}
-                    onClick={() => {
-                      setTemplateForBuilder(tpl);
-                      setBuilderOpened(true);
-                    }}
-                  >
-                    Constructor de Campos
-                  </Button>
-
-                  <Group gap={6}>
-                    <Tooltip label="Previsualizar Plantilla">
-                      <ActionIcon
-                        variant="default"
-                        size="sm"
-                        onClick={() => {
-                          setPreviewTemplate(tpl);
-                          setPreviewOpened(true);
-                        }}
-                      >
-                        <IconEye size={16} />
-                      </ActionIcon>
-                    </Tooltip>
-
-                    <Tooltip label="Duplicar Plantilla">
-                      <ActionIcon
-                        variant="default"
-                        size="sm"
-                        onClick={() => handleDuplicateTemplate(tpl.id)}
-                      >
-                        <IconCopy size={16} />
-                      </ActionIcon>
-                    </Tooltip>
-
-                    <Button
-                      size="xs"
-                      variant="subtle"
-                      color={tpl.is_active ? 'orange' : 'teal'}
-                      onClick={() => handleToggleTemplateActive(tpl.id)}
-                    >
-                      {tpl.is_active ? 'Desactivar' : 'Activar'}
-                    </Button>
-                  </Group>
-                </Group>
-              </Card>
-            ))}
-          </SimpleGrid>
-        </Tabs.Panel>
-      </Tabs>
-
-      {/* WIZARD MODAL: 10-Step Automated Document Generation */}
+      {/* ==================================================================== */}
+      {/* WIZARD DE GENERACIÓN DE EXPEDIENTE                                   */}
+      {/* ==================================================================== */}
       <Modal
         opened={wizardOpened}
         onClose={() => setWizardOpened(false)}
-        title={
-          <Group gap="xs">
-            <IconFileSpark size={22} color="#0b7285" />
-            <Text fw={700} size="md">Asistente de Generación y Automatización Documental</Text>
-          </Group>
-        }
+        title="Generador Automatizado de Expedientes Veterinarios"
         size="xl"
-        centered
       >
-        <Stepper active={wizardStep} onStepClick={setWizardStep} mb="xl">
-          <Stepper.Step label="1. Plantilla" description="Selección de modelo" />
-          <Stepper.Step label="2. Formulario" description="Carga de campos" />
-          <Stepper.Step label="3. Revisión" description="Validar y confirmar" />
-          <Stepper.Step label="4. Resultado" description="PDF y Drive" />
+        <Stepper active={wizardStep} onStepClick={setWizardStep} mb="lg">
+          <Stepper.Step label="Plantilla" description="Seleccionar formato">
+            <Stack gap="md" mt="md">
+              <Select
+                label="Plantilla Veterinaria"
+                placeholder="Elija la plantilla clínica a utilizar"
+                data={templates.filter((t) => t.is_active).map((t) => ({ value: String(t.id), label: `${t.nombre} (v${t.version})` }))}
+                value={selectedTemplate ? String(selectedTemplate.id) : null}
+                onChange={(val) => {
+                  const found = templates.find((t) => String(t.id) === val);
+                  setSelectedTemplate(found || null);
+                }}
+                required
+              />
+              <TextInput
+                label="Asunto / Diagnóstico Clínico"
+                placeholder="Ej: Certificado de Vacunación Canina"
+                value={asunto}
+                onChange={(e) => setAsunto(e.currentTarget.value)}
+                required
+              />
+              <TextInput
+                label="Paciente / Solicitante"
+                placeholder="Ej: Max (Golden Retriever) - Dueño: Carlos Gómez"
+                value={solicitante}
+                onChange={(e) => setSolicitante(e.currentTarget.value)}
+                required
+              />
+              <Group justify="flex-end" mt="md">
+                <Button color="vetGreen" onClick={() => setWizardStep(1)} disabled={!selectedTemplate}>
+                  Siguiente: Completar Datos
+                </Button>
+              </Group>
+            </Stack>
+          </Stepper.Step>
+
+          <Stepper.Step label="Campos Dinámicos" description="Llenar variables">
+            <Box mt="md">
+              {selectedTemplate ? (
+                <DynamicForm
+                  fields={selectedTemplate.fields || []}
+                  values={dynamicValues}
+                  onChange={(identifier, val) => setDynamicValues((prev) => ({ ...prev, [identifier]: val }))}
+                />
+              ) : (
+                <Text size="sm" c="dimmed">Seleccione una plantilla primero.</Text>
+              )}
+              <Group justify="space-between" mt="xl">
+                <Button variant="default" onClick={() => setWizardStep(0)}>
+                  Atrás
+                </Button>
+                <Button color="vetGreen" onClick={() => setWizardStep(2)}>
+                  Siguiente: Resumen
+                </Button>
+              </Group>
+            </Box>
+          </Stepper.Step>
+
+          <Stepper.Step label="Confirmación" description="Revisar y compilar">
+            <Stack gap="md" mt="md">
+              <Paper p="md" withBorder radius="md" bg="gray.0">
+                <Text size="sm"><b>Plantilla:</b> {selectedTemplate?.nombre}</Text>
+                <Text size="sm"><b>Asunto:</b> {asunto || 'Sin asunto'}</Text>
+                <Text size="sm"><b>Paciente:</b> {solicitante || 'Sin solicitante'}</Text>
+                <Text size="sm"><b>Variables completadas:</b> {Object.keys(dynamicValues).length}</Text>
+              </Paper>
+              <Group justify="space-between" mt="md">
+                <Button variant="default" onClick={() => setWizardStep(1)}>
+                  Atrás
+                </Button>
+                <Button
+                  color="vetGreen"
+                  loading={generating}
+                  leftSection={<IconFileSpark size={18} />}
+                  onClick={handleExecuteGeneration}
+                >
+                  Compilar y Generar Documento
+                </Button>
+              </Group>
+            </Stack>
+          </Stepper.Step>
+
+          <Stepper.Completed>
+            <Stack align="center" gap="md" mt="xl">
+              <ThemeIcon size={64} radius="xl" color="teal">
+                <IconCheck size={36} />
+              </ThemeIcon>
+              <Title order={3} ta="center">¡Expediente Generado con Éxito!</Title>
+              <Text size="sm" c="dimmed" ta="center">
+                El documento N° <b>{generationResult?.numero_expediente}</b> fue generado, almacenado y registrado.
+              </Text>
+              <Group mt="md">
+                {generationResult?.pdf_url && (
+                  <Button
+                    color="red"
+                    leftSection={<IconDownload size={18} />}
+                    component="a"
+                    href={generationResult.pdf_url}
+                    target="_blank"
+                  >
+                    Descargar PDF Oficial
+                  </Button>
+                )}
+                <Button variant="outline" color="gray" onClick={() => setWizardOpened(false)}>
+                  Cerrar
+                </Button>
+              </Group>
+            </Stack>
+          </Stepper.Completed>
         </Stepper>
-
-        {/* STEP 0: Seleccionar Plantilla */}
-        {wizardStep === 0 && (
-          <Stack gap="md">
-            <Text size="sm" c="dimmed">
-              Seleccione la plantilla maestra que servirá de base. El sistema trabajará sobre una copia independiente en Google Drive sin alterar la plantilla original.
-            </Text>
-
-            <TextInput
-              label="Asunto / Requerimiento del Expediente"
-              placeholder="Ej. Servicio de consultoría e infraestructura cloud"
-              required
-              value={asunto}
-              onChange={(e) => setAsunto(e.currentTarget.value)}
-            />
-
-            <TextInput
-              label="Solicitante / Beneficiario"
-              placeholder="Ej. Consultores Andinos S.A. / Lic. Juan Pérez"
-              required
-              value={solicitante}
-              onChange={(e) => setSolicitante(e.currentTarget.value)}
-            />
-
-            <Select
-              label="Plantilla Maestra"
-              placeholder="Seleccione la plantilla..."
-              data={templates.filter((t) => t.is_active).map((t) => ({ value: String(t.id), label: `${t.nombre} (${t.tipo})` }))}
-              value={selectedTemplate ? String(selectedTemplate.id) : null}
-              onChange={(val) => {
-                const found = templates.find((t) => String(t.id) === val);
-                if (found) setSelectedTemplate(found);
-              }}
-              required
-            />
-
-            <Group justify="flex-end" mt="md">
-              <Button
-                color="enterpriseBlue"
-                disabled={!selectedTemplate || !asunto.trim() || !solicitante.trim()}
-                onClick={() => setWizardStep(1)}
-              >
-                Siguiente: Completar Formulario
-              </Button>
-            </Group>
-          </Stack>
-        )}
-
-        {/* STEP 1: Formulario Dinámico */}
-        {wizardStep === 1 && selectedTemplate && (
-          <Stack gap="md">
-            <Group justify="space-between">
-              <div>
-                <Text fw={700} size="sm">{selectedTemplate.nombre}</Text>
-                <Text size="xs" c="dimmed">Diligencie los campos requeridos para la sustitución de etiquetas en Google Docs.</Text>
-              </div>
-              <Badge color="enterpriseBlue">v{selectedTemplate.version}</Badge>
-            </Group>
-            <Divider />
-
-            <DynamicForm
-              fields={selectedTemplate.fields || []}
-              values={dynamicValues}
-              onChange={(ident, val) => setDynamicValues((prev) => ({ ...prev, [ident]: val }))}
-            />
-
-            <Group justify="space-between" mt="md">
-              <Button variant="default" onClick={() => setWizardStep(0)}>
-                Atrás
-              </Button>
-              <Button color="enterpriseBlue" onClick={() => setWizardStep(2)}>
-                Siguiente: Revisar Información
-              </Button>
-            </Group>
-          </Stack>
-        )}
-
-        {/* STEP 2: Revisión y Confirmación */}
-        {wizardStep === 2 && selectedTemplate && (
-          <Stack gap="md">
-            <Alert icon={<IconCheck size={16} />} title="Información Lista para Compilación" color="teal">
-              Al confirmar, el sistema clonará la plantilla en Google Drive, sustituirá las etiquetas, compilará el archivo oficial y exportará el PDF con firma digital.
-            </Alert>
-
-            <Paper p="md" withBorder radius="md">
-              <Text fw={700} size="sm" mb="xs">Resumen del Expediente:</Text>
-              <Text size="xs"><b>Asunto:</b> {asunto}</Text>
-              <Text size="xs"><b>Solicitante:</b> {solicitante}</Text>
-              <Text size="xs"><b>Plantilla:</b> {selectedTemplate.nombre}</Text>
-              <Divider my="xs" />
-              <Text fw={700} size="xs" mb={4}>Campos Diligenciados:</Text>
-              <Stack gap={2}>
-                {Object.entries(dynamicValues).map(([k, v]) => (
-                  <Text size="11px" key={k} c="dimmed">
-                    <b>{k}:</b> {String(v)}
-                  </Text>
-                ))}
-              </Stack>
-            </Paper>
-
-            <Group justify="space-between" mt="md">
-              <Button variant="default" onClick={() => setWizardStep(1)} disabled={generating}>
-                Atrás
-              </Button>
-              <Button
-                color="teal"
-                leftSection={<IconFileSpark size={16} />}
-                loading={generating}
-                onClick={handleExecuteGeneration}
-              >
-                Confirmar y Generar Documento
-              </Button>
-            </Group>
-          </Stack>
-        )}
-
-        {/* STEP 3: Resultado */}
-        {wizardStep === 3 && generationResult && (
-          <Stack gap="md" align="center" p="md">
-            <ThemeIcon color="teal" size={60} radius="xl">
-              <IconCheck size={36} />
-            </ThemeIcon>
-            <Title order={3} fw={800} c="dark.8" ta="center">
-              ¡Documento Generado Exitosamente!
-            </Title>
-            <Text size="sm" c="dimmed" ta="center">
-              El expediente <b>{generationResult.numero_expediente}</b> se compiló en {generationResult.processing_time_seconds || 1.8}s y se almacenó en Google Drive.
-            </Text>
-
-            <Group mt="lg">
-              <Button
-                component="a"
-                href={generationResult.pdf_url}
-                target="_blank"
-                color="red"
-                leftSection={<IconDownload size={18} />}
-              >
-                Descargar PDF Oficial
-              </Button>
-
-              <Button
-                component="a"
-                href={generationResult.google_doc_url}
-                target="_blank"
-                variant="light"
-                color="blue"
-                leftSection={<IconExternalLink size={18} />}
-              >
-                Abrir en Google Drive
-              </Button>
-            </Group>
-
-            <Button variant="default" mt="md" onClick={() => setWizardOpened(false)}>
-              Cerrar Asistente
-            </Button>
-          </Stack>
-        )}
       </Modal>
 
-      {/* FORM BUILDER MODAL */}
+      {/* Constructor de Campos Dinámicos */}
       <Modal
         opened={builderOpened}
         onClose={() => setBuilderOpened(false)}
-        title={
-          <Group gap="xs">
-            <IconTool size={22} color="#0b7285" />
-            <Text fw={700} size="md">
-              Constructor Dinámico de Campos: {templateForBuilder?.nombre}
-            </Text>
-          </Group>
-        }
+        title={`Constructor de Formulario: ${templateForBuilder?.nombre}`}
         size="90%"
-        centered
       >
         {templateForBuilder && (
           <FormBuilder
             template={templateForBuilder}
-            onUpdateTemplate={fetchTemplates}
+            onUpdateTemplate={() => {
+              fetchTemplates();
+              setBuilderOpened(false);
+            }}
           />
         )}
       </Modal>
 
-      {/* TEMPLATE PREVIEW MODAL */}
+      {/* Previsualización de Plantilla */}
       <Modal
         opened={previewOpened}
         onClose={() => setPreviewOpened(false)}
-        title={
-          <Group gap="xs">
-            <IconEye size={20} color="#0b7285" />
-            <Text fw={700} size="md">Previsualización de Plantilla Maestra</Text>
-          </Group>
-        }
+        title={`Previsualización: ${previewTemplate?.nombre}`}
         size="lg"
-        centered
       >
-        {previewTemplate && (
-          <Box
-            p="md"
-            style={{
-              backgroundColor: '#ffffff',
-              border: '1px solid #e2e8f0',
-              borderRadius: 8,
-              maxHeight: '65vh',
-              overflowY: 'auto',
-            }}
-            dangerouslySetInnerHTML={{ __html: previewTemplate.content_preview || '<p>Plantilla base.</p>' }}
-          />
-        )}
+        <Paper p="lg" withBorder radius="md" bg="gray.0">
+          <div dangerouslySetInnerHTML={{ __html: previewTemplate?.content_preview || '<p>Contenido oficial estructurado.</p>' }} />
+        </Paper>
       </Modal>
     </Box>
   );
