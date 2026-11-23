@@ -226,8 +226,24 @@ docker compose logs -f expedix-web
 ### Error: `Username and password required` en `docker/login-action`
 Este error se producía cuando el pipeline se ejecutaba antes de registrar los secretos en GitHub.
 - **Causa:** Ausencia de variables en el almacén de secretos del repositorio.
-- **Solución implementada:** Se registraron `DOCKERHUB_USERNAME` (`miguelangelcr`) y `DOCKERHUB_TOKEN` en `Settings -> Secrets and variables -> Actions`. Los flujos posteriores (`44943998627` y `44943984483`) concluyeron exitosamente en estado verde (`success`).
+- **Solución implementada:** Se registraron los secretos `DOCKERHUB_USERNAME` (`miguelangelcr`) y `DOCKERHUB_TOKEN` en `Settings -> Secrets and variables -> Actions`.
+- **Ejecuciones exitosas verificadas:**
+  - API Workflow (Run `44982347647`): Construcción y publicación exitosa de `miguelangelcr/expedix-ia:api-latest` y `api-sha-8686d87`.
+  - Web Workflow (Run `45075259659`): Validación TypeScript, build Vite y publicación exitosa de `miguelangelcr/expedix-ia:web-latest` y `web-sha-ec446a5`.
 
 ### Advertencia: `[DEP0040] DeprecationWarning: The punycode module is deprecated`
 - **Origen:** Proviene del runtime interno de Node.js 24 ejecutado por el runner de GitHub Actions al cargar paquetes de acciones empacadas con versiones anteriores de utilitarios de red (`punycode`).
 - **Impacto:** Es un aviso informativo (*warning*) de deprecación del motor Node.js del runner, no un error bloqueante, y no afecta en absoluto a las aplicaciones Django ni React del repositorio.
+
+---
+
+## 11. Ficha Técnica y Metadatos de Docker Hub
+
+Para mantener una presentación consistente con proyectos como Vork:
+
+- **Repositorio Oficial:** `miguelangelcr/expedix-ia`
+- **Descripción (< 350 caracteres):**
+  > Plataforma empresarial de automatización y gestión de expedientes electrónicos. API REST en Django/Daphne ASGI y Frontend SPA en React 19/Vite, preparada para despliegue en Docker, Kubernetes y Render.
+- **Website URL:** `https://hub.docker.com/r/miguelangelcr/expedix-ia/tags`
+- **Topics Relevantes:**
+  `expedix`, `expedix-ia`, `api`, `django`, `python`, `react`, `reactjs`, `typescript`, `vite`, `mantine`, `rest-api`, `daphne`, `asgi`, `celery`, `redis`, `postgresql`, `docker`, `dockerhub`, `kubernetes`, `render`, `github-actions`, `cicd`, `nginx`, `microservices`
