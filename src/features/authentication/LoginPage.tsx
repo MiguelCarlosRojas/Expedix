@@ -7,7 +7,7 @@ import {
 import { useForm } from '@mantine/form';
 import {
   IconPaw, IconStethoscope, IconShieldCheck, IconHeartbeat,
-  IconLock, IconUser, IconAlertCircle, IconArrowRight, IconHeartHandshake
+  IconLock, IconUser, IconAlertCircle, IconArrowRight, IconHeartHandshake, IconFileText
 } from '@tabler/icons-react';
 import { useAuth } from '../../hooks/useAuth';
 
@@ -185,14 +185,32 @@ export const LoginPage: React.FC = () => {
 
               {/* Badges de características */}
               <Group gap="xs" mt="md">
-                <Badge size="sm" variant="light" color="green" styles={{ root: { backgroundColor: 'rgba(255, 255, 255, 0.12)', color: '#ffffff' } }}>
-                  🐾 Caninos & Felinos
+                <Badge
+                  size="sm"
+                  variant="light"
+                  color="green"
+                  leftSection={<IconPaw size={13} color="#86efac" />}
+                  styles={{ root: { backgroundColor: 'rgba(255, 255, 255, 0.12)', color: '#ffffff' } }}
+                >
+                  Caninos & Felinos
                 </Badge>
-                <Badge size="sm" variant="light" color="green" styles={{ root: { backgroundColor: 'rgba(255, 255, 255, 0.12)', color: '#ffffff' } }}>
-                  📋 Consentimientos
+                <Badge
+                  size="sm"
+                  variant="light"
+                  color="green"
+                  leftSection={<IconFileText size={13} color="#86efac" />}
+                  styles={{ root: { backgroundColor: 'rgba(255, 255, 255, 0.12)', color: '#ffffff' } }}
+                >
+                  Consentimientos
                 </Badge>
-                <Badge size="sm" variant="light" color="green" styles={{ root: { backgroundColor: 'rgba(255, 255, 255, 0.12)', color: '#ffffff' } }}>
-                  🩺 Trazabilidad Médica
+                <Badge
+                  size="sm"
+                  variant="light"
+                  color="green"
+                  leftSection={<IconShieldCheck size={13} color="#86efac" />}
+                  styles={{ root: { backgroundColor: 'rgba(255, 255, 255, 0.12)', color: '#ffffff' } }}
+                >
+                  Trazabilidad Médica
                 </Badge>
               </Group>
             </Box>

@@ -87,6 +87,15 @@ export const theme = createTheme({
       defaultProps: {
         radius: 'md',
         size: 'sm',
+        checkIconPosition: 'right',
+      },
+      styles: {
+        input: {
+          backgroundColor: '#f8fafc',
+          borderColor: '#cbd5e1',
+          cursor: 'pointer',
+          fontWeight: 500,
+        },
       },
     },
     Card: {

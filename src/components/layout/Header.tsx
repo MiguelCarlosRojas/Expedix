@@ -12,13 +12,13 @@ import { ProfileModal } from './ProfileModal';
 import { LogoutConfirmationModal } from './LogoutConfirmationModal';
 
 interface HeaderProps {
-  title: string;
+  title?: string;
   breadcrumbs?: Array<{ label: string; href?: string }>;
   collapsed?: boolean;
   onToggleCollapse?: () => void;
 }
 
-export const Header: React.FC<HeaderProps> = ({ title, breadcrumbs, collapsed, onToggleCollapse }) => {
+export const Header: React.FC<HeaderProps> = ({ collapsed, onToggleCollapse }) => {
   const { user } = useAuth();
   const { unreadCount, recentNotifications, markAsRead, markAllAsRead } = useNotificationsWebSocket();
 
@@ -28,8 +28,8 @@ export const Header: React.FC<HeaderProps> = ({ title, breadcrumbs, collapsed, o
   return (
     <>
       <header className="app-header" style={{ height: 64, padding: '0 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#ffffff', borderBottom: '1px solid #e2e8f0' }}>
-        {/* Left: Sidebar Toggle Button + Navigation Context & Breadcrumbs */}
-        <Group gap="md" align="center">
+        {/* Left: Sidebar Toggle Button ONLY (No redundant titles, breadcrumbs or roles) */}
+        <Group gap="sm" align="center">
           {onToggleCollapse && (
             <Tooltip
               label={collapsed ? 'Expandir barra lateral' : 'Contraer barra lateral'}
@@ -56,32 +56,6 @@ export const Header: React.FC<HeaderProps> = ({ title, breadcrumbs, collapsed, o
               </ActionIcon>
             </Tooltip>
           )}
-
-          <Box>
-            <Group gap="xs" align="center">
-              <Text fw={700} size="md" c="dark.8">
-                {title}
-              </Text>
-              <Badge size="xs" variant="light" color="vetGreen" radius="sm">
-                {user?.role_details?.name || (user?.is_superuser ? 'Superadministrador' : 'Personal Veterinario')}
-              </Badge>
-            </Group>
-
-            {breadcrumbs && breadcrumbs.length > 0 && (
-              <Group gap={4} mt={2}>
-                {breadcrumbs.map((crumb, idx) => (
-                  <React.Fragment key={idx}>
-                    <Text size="xs" c={idx === breadcrumbs.length - 1 ? 'vetGreen.8' : 'dimmed'} fw={idx === breadcrumbs.length - 1 ? 600 : 400}>
-                      {crumb.label}
-                    </Text>
-                    {idx < breadcrumbs.length - 1 && (
-                      <Text size="xs" c="dimmed">/</Text>
-                    )}
-                  </React.Fragment>
-                ))}
-              </Group>
-            )}
-          </Box>
         </Group>
 
         {/* Right: Notifications Bell and User Profile Menu */}

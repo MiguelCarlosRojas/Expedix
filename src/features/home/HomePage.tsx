@@ -84,21 +84,93 @@ export const HomePage: React.FC = () => {
 
   return (
     <Box className="anim-fade-in">
-      {/* Header de Bienvenida con Identidad Veterinaria */}
-      <Box mb="md">
-        <Group gap="xs" mb={4}>
-          <Badge color="vetGreen" variant="light" size="sm" leftSection={<IconPaw size={13} />}>
-            Expedix Vet • Portal Clínico
-          </Badge>
-          <Badge color="gray" variant="outline" size="sm">
-            Módulos Asignados por Rol
-          </Badge>
+      {/* Hero Banner de Bienvenida con Identidad Veterinaria */}
+      <Paper
+        p={{ base: 'lg', md: 'xl' }}
+        radius="lg"
+        mb="xl"
+        style={{
+          background: 'linear-gradient(135deg, #065f46 0%, #047857 50%, #0d9488 100%)',
+          color: '#ffffff',
+          position: 'relative',
+          overflow: 'hidden',
+          boxShadow: '0 8px 24px -4px rgba(6, 95, 70, 0.22)',
+        }}
+      >
+        {/* Decoraciones vectoriales sutiles de fondo */}
+        <Box
+          style={{
+            position: 'absolute',
+            top: -40,
+            right: -40,
+            width: 220,
+            height: 220,
+            borderRadius: '50%',
+            background: 'radial-gradient(circle, rgba(134, 239, 172, 0.18) 0%, transparent 70%)',
+            pointerEvents: 'none',
+          }}
+        />
+        <Box
+          style={{
+            position: 'absolute',
+            bottom: -30,
+            right: 120,
+            width: 160,
+            height: 160,
+            borderRadius: '50%',
+            background: 'radial-gradient(circle, rgba(94, 234, 212, 0.18) 0%, transparent 70%)',
+            pointerEvents: 'none',
+          }}
+        />
+
+        <Group justify="space-between" align="center" wrap="nowrap" style={{ position: 'relative', zIndex: 1 }}>
+          <Box style={{ maxWidth: 700 }}>
+            <Badge
+              size="sm"
+              variant="light"
+              color="green"
+              mb="xs"
+              leftSection={<IconPaw size={13} color="#86efac" />}
+              styles={{
+                root: {
+                  backgroundColor: 'rgba(255, 255, 255, 0.15)',
+                  color: '#ffffff',
+                  fontWeight: 600,
+                  backdropFilter: 'blur(4px)',
+                },
+              }}
+            >
+              Expedix Vet • Portal Clínico
+            </Badge>
+            <Title order={1} fw={900} style={{ fontSize: '2.1rem', lineHeight: 1.18, color: '#ffffff', marginBottom: 8 }}>
+              Bienvenido a Expedix Vet
+            </Title>
+            <Text size="md" style={{ color: '#d1fae5', lineHeight: 1.5, maxWidth: 620 }}>
+              Todo lo que necesitas para gestionar la atención y el bienestar animal desde un solo lugar.
+            </Text>
+          </Box>
+
+          <Box visibleFrom="sm" style={{ opacity: 0.9 }}>
+            <ThemeIcon
+              size={76}
+              radius="xl"
+              variant="light"
+              color="green"
+              styles={{ root: { backgroundColor: 'rgba(255, 255, 255, 0.12)' } }}
+            >
+              <IconPaw size={44} color="#86efac" />
+            </ThemeIcon>
+          </Box>
         </Group>
+      </Paper>
+
+      {/* Sección: Tu espacio de trabajo */}
+      <Box mb="md">
         <Title order={2} fw={800} c="dark.8">
-          Centro de Operaciones Veterinarias
+          Tu espacio de trabajo
         </Title>
         <Text c="dimmed" size="sm" mt={2}>
-          Seleccione la operación que desea realizar. Se muestran únicamente las funciones habilitadas para su perfil profesional.
+          Accede rápidamente a las herramientas y módulos disponibles para gestionar tus actividades veterinarias.
         </Text>
       </Box>
 

@@ -300,27 +300,6 @@ export const DocumentsPage: React.FC = () => {
         </Group>
       </Box>
 
-      {/* Tabs Principales de Navegación */}
-      <Tabs
-        value={activeTab}
-        onChange={(val) => {
-          if (val === 'templates') {
-            navigate('/app/documentos/plantillas');
-          } else {
-            navigate('/app/documentos/todos');
-          }
-        }}
-        mb="md"
-      >
-        <Tabs.List>
-          <Tabs.Tab value="expedientes" leftSection={<IconFiles size={16} />}>
-            Expedientes
-          </Tabs.Tab>
-          <Tabs.Tab value="templates" leftSection={<IconTemplate size={16} />}>
-            Plantillas Maestras
-          </Tabs.Tab>
-        </Tabs.List>
-      </Tabs>
 
       {/* ==================================================================== */}
       {/* PESTAÑA 1: LISTADO DE EXPEDIENTES                                    */}

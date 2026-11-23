@@ -138,8 +138,15 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggleCollapse })
       <Divider color="gray.2" />
 
       {/* Independent Vertical Scroll Nav */}
-      <ScrollArea style={{ flex: 1 }} p="xs">
-        <Stack gap={3}>
+      <ScrollArea
+        style={{ flex: 1, width: '100%' }}
+        p="xs"
+        type="hover"
+        styles={{
+          viewport: { overflowX: 'hidden' },
+        }}
+      >
+        <Stack gap={3} style={{ width: '100%', overflow: 'hidden' }}>
           {/* 1. Inicio */}
           {hasModuleAccess('inicio') && (
             <Tooltip label="Inicio" position="right" disabled={!collapsed} withArrow>
@@ -202,9 +209,11 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggleCollapse })
                         to={sub.path}
                         className={({ isActive }) => `sidebar-sublink ${isActive ? 'active' : ''}`}
                       >
-                        <Group gap="xs">
-                          {sub.icon}
-                          <Text size="xs">{sub.label}</Text>
+                        <Group gap="xs" wrap="nowrap" style={{ overflow: 'hidden', maxWidth: '100%' }}>
+                          <Box style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>
+                            {sub.icon}
+                          </Box>
+                          <Text size="xs" truncate style={{ flex: 1 }}>{sub.label}</Text>
                         </Group>
                       </NavLink>
                     ))}
@@ -262,9 +271,11 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggleCollapse })
                         to={sub.path}
                         className={({ isActive }) => `sidebar-sublink ${isActive ? 'active' : ''}`}
                       >
-                        <Group gap="xs">
-                          {sub.icon}
-                          <Text size="xs">{sub.label}</Text>
+                        <Group gap="xs" wrap="nowrap" style={{ overflow: 'hidden', maxWidth: '100%' }}>
+                          <Box style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>
+                            {sub.icon}
+                          </Box>
+                          <Text size="xs" truncate style={{ flex: 1 }}>{sub.label}</Text>
                         </Group>
                       </NavLink>
                     ))}
@@ -308,9 +319,11 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggleCollapse })
                         to={sub.path}
                         className={({ isActive }) => `sidebar-sublink ${isActive ? 'active' : ''}`}
                       >
-                        <Group gap="xs">
-                          {sub.icon}
-                          <Text size="xs">{sub.label}</Text>
+                        <Group gap="xs" wrap="nowrap" style={{ overflow: 'hidden', maxWidth: '100%' }}>
+                          <Box style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>
+                            {sub.icon}
+                          </Box>
+                          <Text size="xs" truncate style={{ flex: 1 }}>{sub.label}</Text>
                         </Group>
                       </NavLink>
                     ))}
