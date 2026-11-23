@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import {
   Box, Paper, Title, Text, Button, Table, Badge, ActionIcon, Modal,
-  TextInput, Textarea, Group, Stack, Checkbox, SimpleGrid, Card, Tooltip
+  TextInput, Textarea, Group, Stack, Checkbox, SimpleGrid, Card, Tooltip, Menu
 } from '@mantine/core';
 import {
   IconShieldLock, IconPlus, IconCopy, IconEdit, IconTrash, IconCheck, IconAlertTriangle,
-  IconPaw
+  IconPaw, IconDotsVertical
 } from '@tabler/icons-react';
 import { api } from '../../services/api';
 import { Role, Permission } from '../../types';
@@ -210,28 +210,28 @@ export const RolesPage: React.FC = () => {
                     </Badge>
                   </Table.Td>
                   <Table.Td p="sm" style={{ textAlign: 'center' }}>
-                    <Group gap={4} justify="center">
-                      <Tooltip label="Clonar rol">
-                        <ActionIcon
-                          variant="subtle"
-                          color="gray"
-                          size="sm"
-                          onClick={() => handleDuplicate(role.id)}
-                        >
-                          <IconCopy size={16} />
+                    <Menu shadow="md" width={220} position="bottom-end" withinPortal>
+                      <Menu.Target>
+                        <ActionIcon variant="subtle" color="gray" size="sm" radius="md" title="Opciones del rol">
+                          <IconDotsVertical size={16} />
                         </ActionIcon>
-                      </Tooltip>
-                      <Tooltip label="Editar permisos">
-                        <ActionIcon
-                          variant="subtle"
-                          color="blue"
-                          size="sm"
+                      </Menu.Target>
+                      <Menu.Dropdown>
+                        <Menu.Label>Rol: {role.name}</Menu.Label>
+                        <Menu.Item
+                          leftSection={<IconEdit size={15} color="#2563eb" />}
                           onClick={() => handleOpenEdit(role)}
                         >
-                          <IconEdit size={16} />
-                        </ActionIcon>
-                      </Tooltip>
-                    </Group>
+                          Editar Permisos
+                        </Menu.Item>
+                        <Menu.Item
+                          leftSection={<IconCopy size={15} color="#64748b" />}
+                          onClick={() => handleDuplicate(role.id)}
+                        >
+                          Clonar Rol
+                        </Menu.Item>
+                      </Menu.Dropdown>
+                    </Menu>
                   </Table.Td>
                 </Table.Tr>
               ))}

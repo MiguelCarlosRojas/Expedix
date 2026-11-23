@@ -9,6 +9,12 @@
 /* -------------------------------------------------------------------------- */
 /* Custom Veterinary Theme Scrollbars & Base Styles                           */
 /* -------------------------------------------------------------------------- */
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -34,6 +40,71 @@ body {
   color: #1e293b;
   font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
   -webkit-font-smoothing: antialiased;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Unified Veterinary Button Styles (Matching Login Button)                   */
+/* -------------------------------------------------------------------------- */
+.mantine-Button-root {
+  font-family: inherit;
+  font-weight: 600;
+  border-radius: 10px;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.mantine-Button-root:not([disabled]):active {
+  transform: translateY(1px);
+}
+
+/* Primary Filled Buttons (Same as Acceder a Expedix Vet) */
+.mantine-Button-root[data-variant="filled"]:not([data-color="red"]):not([data-color="gray"]):not([data-color="blue"]) {
+  background: linear-gradient(135deg, #16a34a 0%, #15803d 100%) !important;
+  box-shadow: 0 4px 12px rgba(22, 163, 74, 0.25) !important;
+  color: #ffffff !important;
+  border: none !important;
+}
+
+.mantine-Button-root[data-variant="filled"]:not([data-color="red"]):not([data-color="gray"]):not([data-color="blue"]):hover {
+  background: linear-gradient(135deg, #15803d 0%, #166534 100%) !important;
+  box-shadow: 0 6px 16px rgba(22, 163, 74, 0.35) !important;
+  transform: translateY(-1px);
+}
+
+/* Danger / Destructive Filled Buttons */
+.mantine-Button-root[data-variant="filled"][data-color="red"] {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%) !important;
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.25) !important;
+  color: #ffffff !important;
+}
+
+.mantine-Button-root[data-variant="filled"][data-color="red"]:hover {
+  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%) !important;
+  box-shadow: 0 6px 16px rgba(239, 68, 68, 0.35) !important;
+  transform: translateY(-1px);
+}
+
+/* Secondary / Light Buttons */
+.mantine-Button-root[data-variant="light"] {
+  background-color: #f0fdf4 !important;
+  color: #15803d !important;
+  border: 1px solid #bbf7d0 !important;
+}
+
+.mantine-Button-root[data-variant="light"]:hover {
+  background-color: #dcfce7 !important;
+  border-color: #86efac !important;
+  transform: translateY(-1px);
+}
+
+/* Outline Buttons */
+.mantine-Button-root[data-variant="outline"] {
+  border-color: #16a34a !important;
+  color: #15803d !important;
+}
+
+.mantine-Button-root[data-variant="outline"]:hover {
+  background-color: #f0fdf4 !important;
+  border-color: #15803d !important;
 }
 
 /* -------------------------------------------------------------------------- */

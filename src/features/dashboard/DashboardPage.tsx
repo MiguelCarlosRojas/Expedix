@@ -1,19 +1,30 @@
 import React, { useEffect, useState } from 'react';
 import {
   SimpleGrid, Paper, Text, Group, ThemeIcon, Title, Stack, Box, Select,
-  Skeleton, Table, Badge, Card, RingProgress, Tabs
+  Skeleton, Table, Badge, Card, RingProgress, Tabs, Button, ActionIcon
 } from '@mantine/core';
+import { DateInput } from '@mantine/dates';
 import { BarChart, DonutChart, LineChart, AreaChart } from '@mantine/charts';
 import {
   IconFiles, IconFileCheck, IconClock, IconLoader2, IconAlertCircle,
   IconTemplate, IconBrandGoogleDrive, IconUsers, IconCircleCheck, IconCpu, IconDatabase,
-  IconPaw, IconStethoscope, IconHeartbeat, IconFileCertificate
+  IconPaw, IconStethoscope, IconHeartbeat, IconFileCertificate,
+  IconCalendar, IconFilter, IconFilterOff, IconRefresh
 } from '@tabler/icons-react';
 import { api } from '../../services/api';
 import { DashboardStats, DashboardCharts, IntegrationsStatus } from '../../types';
 import { DashboardSkeleton } from '../../components/ui/SkeletonLoaders';
+import { useUrlFilters } from '../../hooks/useUrlFilters';
 
 export const DashboardPage: React.FC = () => {
+  const { getFilter, setFilter, clearFilters } = useUrlFilters();
+  const startDateStr = getFilter('start_date', '');
+  const endDateStr = getFilter('end_date', '');
+  const statusFilter = getFilter('estado', '');
+
+  const startDate = startDateStr ? new Date(startDateStr) : null;
+  const endDate = endDateStr ? new Date(endDateStr) : null;
+
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [charts, setCharts] = useState<DashboardCharts | null>(null);
   const [integrations, setIntegrations] = useState<IntegrationsStatus | null>(null);
@@ -23,9 +34,16 @@ export const DashboardPage: React.FC = () => {
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
+      const params = new URLSearchParams();
+      if (startDateStr) params.append('start_date', startDateStr);
+      if (endDateStr) params.append('end_date', endDateStr);
+      if (statusFilter) params.append('estado', statusFilter);
+
+      const qs = params.toString() ? `?${params.toString()}` : '';
+
       const [statsRes, chartsRes, intRes, actRes] = await Promise.all([
-        api.get<DashboardStats>('/dashboard/stats/'),
-        api.get<DashboardCharts>('/dashboard/charts/'),
+        api.get<DashboardStats>(`/dashboard/stats/${qs}`),
+        api.get<DashboardCharts>(`/dashboard/charts/${qs}`),
         api.get<IntegrationsStatus>('/dashboard/integrations/'),
         api.get<any>('/dashboard/activity/'),
       ]);
@@ -42,7 +60,14 @@ export const DashboardPage: React.FC = () => {
 
   useEffect(() => {
     fetchDashboardData();
-  }, []);
+  }, [startDateStr, endDateStr, statusFilter]);
+
+  const handleDateChange = (field: 'start_date' | 'end_date', date: Date | null) => {
+    const formatted = date ? date.toISOString().split('T')[0] : '';
+    setFilter(field, formatted);
+  };
+
+  const hasActiveFilters = Boolean(startDateStr || endDateStr || statusFilter);
 
   return (
     <Box className="anim-fade-in">
@@ -63,6 +88,71 @@ export const DashboardPage: React.FC = () => {
           Seguimiento de expedientes veterinarios, emisión de certificados de salud, almacenamiento en la nube y rendimiento del equipo.
         </Text>
       </Box>
+
+      {/* Barra de Filtros Sincronizada con URL Query Parameters */}
+      <Paper p="sm" radius="md" withBorder bg="white" shadow="xs" mb="lg">
+        <Group justify="space-between" wrap="wrap">
+          <Group gap="sm" wrap="wrap">
+            <DateInput
+              placeholder="Desde (dd/mm/aaaa)"
+              value={startDate}
+              onChange={(date) => handleDateChange('start_date', date)}
+              leftSection={<IconCalendar size={16} color="#16a34a" />}
+              clearable
+              size="xs"
+              radius="md"
+              style={{ width: 180 }}
+            />
+            <DateInput
+              placeholder="Hasta (dd/mm/aaaa)"
+              value={endDate}
+              onChange={(date) => handleDateChange('end_date', date)}
+              leftSection={<IconCalendar size={16} color="#16a34a" />}
+              clearable
+              size="xs"
+              radius="md"
+              style={{ width: 180 }}
+            />
+            <Select
+              placeholder="Estado clínico"
+              data={[
+                { value: '', label: 'Todos los estados' },
+                { value: 'GENERADO', label: 'Completados' },
+                { value: 'PENDIENTE', label: 'Pendientes' },
+                { value: 'EN_PROCESO', label: 'En Proceso' },
+                { value: 'ERROR', label: 'Con Errores' },
+              ]}
+              value={statusFilter}
+              onChange={(val) => setFilter('estado', val || '')}
+              clearable
+              size="xs"
+              radius="md"
+              style={{ width: 170 }}
+            />
+            {hasActiveFilters && (
+              <Button
+                variant="subtle"
+                color="gray"
+                size="xs"
+                leftSection={<IconFilterOff size={14} />}
+                onClick={() => clearFilters()}
+              >
+                Limpiar Filtros
+              </Button>
+            )}
+          </Group>
+
+          <Button
+            variant="light"
+            color="vetGreen"
+            size="xs"
+            leftSection={<IconRefresh size={14} />}
+            onClick={fetchDashboardData}
+          >
+            Actualizar Métricas
+          </Button>
+        </Group>
+      </Paper>
 
       {loading && <DashboardSkeleton />}
 

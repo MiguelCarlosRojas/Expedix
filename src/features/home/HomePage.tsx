@@ -1,7 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  SimpleGrid, Card, Text, Group, ThemeIcon, Title, Stack, Box, Skeleton, Alert, Badge
+  SimpleGrid, Card, Text, Group, ThemeIcon, Title, Stack, Box, Skeleton, Alert, Badge,
+  TextInput, Select, Paper, Button
 } from '@mantine/core';
 import {
   IconFolderPlus,
@@ -19,10 +20,14 @@ import {
   IconStethoscope,
   IconFileCertificate,
   IconHeartbeat,
+  IconSearch,
+  IconFilterOff,
 } from '@tabler/icons-react';
 import { api } from '../../services/api';
 import { ShortcutCard } from '../../types';
 import { CardSkeleton } from '../../components/ui/SkeletonLoaders';
+import { useUrlFilters } from '../../hooks/useUrlFilters';
+import { EmptyState } from '../../components/ui/EmptyState';
 
 const iconMap: Record<string, React.ReactNode> = {
   IconFolderPlus: <IconFolderPlus size={26} />,
@@ -46,6 +51,10 @@ export const HomePage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
 
+  const { getFilter, setFilter, clearFilters } = useUrlFilters();
+  const searchFilter = getFilter('search', '');
+  const moduleFilter = getFilter('module', '');
+
   useEffect(() => {
     const fetchShortcuts = async () => {
       try {
@@ -60,10 +69,23 @@ export const HomePage: React.FC = () => {
     fetchShortcuts();
   }, []);
 
+  const filteredShortcuts = useMemo(() => {
+    return shortcuts.filter((s) => {
+      const matchSearch =
+        !searchFilter ||
+        s.title.toLowerCase().includes(searchFilter.toLowerCase()) ||
+        s.description.toLowerCase().includes(searchFilter.toLowerCase());
+      const matchModule = !moduleFilter || s.module === moduleFilter;
+      return matchSearch && matchModule;
+    });
+  }, [shortcuts, searchFilter, moduleFilter]);
+
+  const hasActiveFilters = Boolean(searchFilter || moduleFilter);
+
   return (
     <Box className="anim-fade-in">
       {/* Header de Bienvenida con Identidad Veterinaria */}
-      <Box mb="xl">
+      <Box mb="md">
         <Group gap="xs" mb={4}>
           <Badge color="vetGreen" variant="light" size="sm" leftSection={<IconPaw size={13} />}>
             Expedix Vet • Portal Clínico
@@ -80,6 +102,50 @@ export const HomePage: React.FC = () => {
         </Text>
       </Box>
 
+      {/* Barra de Filtros de Accesos Directos Sincronizada con URL */}
+      <Paper p="sm" radius="md" withBorder bg="white" shadow="xs" mb="lg">
+        <Group justify="space-between" wrap="wrap">
+          <Group gap="sm" style={{ flex: 1, minWidth: 260 }}>
+            <TextInput
+              placeholder="Buscar acceso rápido o función clínica..."
+              leftSection={<IconSearch size={16} color="#16a34a" />}
+              value={searchFilter}
+              onChange={(e) => setFilter('search', e.currentTarget.value)}
+              style={{ flex: 1, minWidth: 220 }}
+              size="xs"
+              radius="md"
+            />
+            <Select
+              placeholder="Todos los módulos"
+              data={[
+                { value: '', label: 'Todos los módulos' },
+                { value: 'documentos', label: 'Documentos & Historias' },
+                { value: 'drives', label: 'Google Drive & Univer' },
+                { value: 'reportes', label: 'Centro de Reportes' },
+                { value: 'administracion', label: 'Administración' },
+              ]}
+              value={moduleFilter}
+              onChange={(val) => setFilter('module', val || '')}
+              clearable
+              size="xs"
+              radius="md"
+              style={{ width: 190 }}
+            />
+            {hasActiveFilters && (
+              <Button
+                variant="subtle"
+                color="gray"
+                size="xs"
+                leftSection={<IconFilterOff size={14} />}
+                onClick={() => clearFilters()}
+              >
+                Limpiar
+              </Button>
+            )}
+          </Group>
+        </Group>
+      </Paper>
+
       {error && (
         <Alert icon={<IconAlertCircle size={16} />} title="Aviso" color="red" mb="lg" radius="md">
           {error}
@@ -92,9 +158,16 @@ export const HomePage: React.FC = () => {
             <Skeleton key={i} height={140} radius="md" />
           ))}
         </SimpleGrid>
+      ) : filteredShortcuts.length === 0 ? (
+        <EmptyState
+          title="No se encontraron accesos directos"
+          description="No existen operaciones que coincidan con los filtros seleccionados."
+          actionText="Restablecer Filtros"
+          onAction={() => clearFilters()}
+        />
       ) : (
         <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }} spacing="lg">
-          {shortcuts.map((card) => {
+          {filteredShortcuts.map((card) => {
             const iconNode = iconMap[card.icon] || <IconPaw size={26} />;
             return (
               <Card

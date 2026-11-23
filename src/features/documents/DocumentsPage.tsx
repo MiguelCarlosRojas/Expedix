@@ -3,13 +3,14 @@ import { useParams, useNavigate } from 'react-router-dom';
 import {
   Box, Tabs, Table, Text, Group, Button, TextInput, Select, Badge,
   ActionIcon, Card, Modal, Stepper, Stack, Paper, Title, Divider,
-  Tooltip, Alert, SimpleGrid, ThemeIcon, ScrollArea
+  Tooltip, Alert, SimpleGrid, ThemeIcon, ScrollArea, Menu
 } from '@mantine/core';
 import {
   IconPlus, IconSearch, IconFilter, IconFileSpark, IconDownload,
   IconEye, IconTrash, IconTemplate, IconRefresh, IconCheck, IconAlertTriangle,
   IconExternalLink, IconCopy, IconTool, IconFiles, IconBrandGoogleDrive,
-  IconPaw, IconStethoscope, IconFileCertificate, IconFilterOff
+  IconPaw, IconStethoscope, IconFileCertificate, IconFilterOff,
+  IconDotsVertical, IconToggleLeft, IconToggleRight
 } from '@tabler/icons-react';
 import { api } from '../../services/api';
 import { Expediente, DocumentTemplate, DynamicField } from '../../types';
@@ -60,6 +61,37 @@ export const DocumentsPage: React.FC = () => {
   // Preview Modal
   const [previewOpened, setPreviewOpened] = useState(false);
   const [previewTemplate, setPreviewTemplate] = useState<DocumentTemplate | null>(null);
+
+  // Delete Expediente Modal
+  const [expedienteToDelete, setExpedienteToDelete] = useState<Expediente | null>(null);
+  const [deleteModalOpened, setDeleteModalOpened] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  const confirmDeleteExpediente = async () => {
+    if (!expedienteToDelete) return;
+    setDeleting(true);
+    try {
+      await api.delete(`/documents/${expedienteToDelete.id}/`);
+      notifications.show({
+        title: 'Expediente Eliminado',
+        message: `El expediente ${expedienteToDelete.numero_expediente} fue eliminado correctamente.`,
+        color: 'teal',
+        icon: <IconCheck size={18} />,
+      });
+      setDeleteModalOpened(false);
+      setExpedienteToDelete(null);
+      fetchExpedientes();
+    } catch (e: any) {
+      notifications.show({
+        title: 'Error al eliminar',
+        message: e.response?.data?.detail || 'No se pudo eliminar el expediente.',
+        color: 'red',
+        icon: <IconAlertTriangle size={18} />,
+      });
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   const fetchExpedientes = async () => {
     try {
@@ -226,9 +258,6 @@ export const DocumentsPage: React.FC = () => {
               <Badge color="vetGreen" variant="light" size="sm">
                 Gestión Clínica & Documental
               </Badge>
-              <Badge color="gray" variant="outline" size="sm">
-                {activeCategory.toUpperCase()}
-              </Badge>
             </Group>
             <Title order={2} fw={800} c="dark.8">
               {currentCatInfo.title}
@@ -285,10 +314,10 @@ export const DocumentsPage: React.FC = () => {
       >
         <Tabs.List>
           <Tabs.Tab value="expedientes" leftSection={<IconFiles size={16} />}>
-            Expedientes ({filteredExpedientes.length})
+            Expedientes
           </Tabs.Tab>
           <Tabs.Tab value="templates" leftSection={<IconTemplate size={16} />}>
-            Plantillas Maestras ({templates.length})
+            Plantillas Maestras
           </Tabs.Tab>
         </Tabs.List>
       </Tabs>
@@ -443,27 +472,28 @@ export const DocumentsPage: React.FC = () => {
                             {exp.created_at ? exp.created_at.split('T')[0] : 'N/A'}
                           </Text>
                         </Table.Td>
-                        <Table.Td p="sm">
-                          <Group justify="center" gap={4}>
-                            {exp.pdf_url ? (
-                              <Tooltip label="Descargar PDF oficial">
-                                <ActionIcon
-                                  variant="subtle"
-                                  color="red"
-                                  size="sm"
+                        <Table.Td p="sm" style={{ textAlign: 'center' }}>
+                          <Menu shadow="md" width={220} position="bottom-end" withinPortal>
+                            <Menu.Target>
+                              <ActionIcon variant="subtle" color="gray" size="sm" radius="md" title="Opciones del expediente">
+                                <IconDotsVertical size={16} />
+                              </ActionIcon>
+                            </Menu.Target>
+                            <Menu.Dropdown>
+                              <Menu.Label>Expediente {exp.numero_expediente}</Menu.Label>
+                              {exp.pdf_url && (
+                                <Menu.Item
+                                  leftSection={<IconDownload size={15} color="#ef4444" />}
                                   component="a"
                                   href={exp.pdf_url}
                                   target="_blank"
                                 >
-                                  <IconDownload size={16} />
-                                </ActionIcon>
-                              </Tooltip>
-                            ) : (
-                              <Tooltip label="Compilar documento">
-                                <ActionIcon
-                                  variant="subtle"
-                                  color="vetGreen"
-                                  size="sm"
+                                  Descargar PDF Oficial
+                                </Menu.Item>
+                              )}
+                              {!exp.pdf_url && (
+                                <Menu.Item
+                                  leftSection={<IconFileSpark size={15} color="#16a34a" />}
                                   onClick={async () => {
                                     try {
                                       await api.post(`/documents/${exp.id}/generate_document/`);
@@ -474,26 +504,32 @@ export const DocumentsPage: React.FC = () => {
                                     }
                                   }}
                                 >
-                                  <IconFileSpark size={16} />
-                                </ActionIcon>
-                              </Tooltip>
-                            )}
-
-                            {exp.google_doc_url && (
-                              <Tooltip label="Abrir copia Google Docs">
-                                <ActionIcon
-                                  variant="subtle"
-                                  color="blue"
-                                  size="sm"
+                                  Compilar Documento
+                                </Menu.Item>
+                              )}
+                              {exp.google_doc_url && (
+                                <Menu.Item
+                                  leftSection={<IconExternalLink size={15} color="#2563eb" />}
                                   component="a"
                                   href={exp.google_doc_url}
                                   target="_blank"
                                 >
-                                  <IconExternalLink size={16} />
-                                </ActionIcon>
-                              </Tooltip>
-                            )}
-                          </Group>
+                                  Abrir en Google Docs
+                                </Menu.Item>
+                              )}
+                              <Divider />
+                              <Menu.Item
+                                color="red"
+                                leftSection={<IconTrash size={15} />}
+                                onClick={() => {
+                                  setExpedienteToDelete(exp);
+                                  setDeleteModalOpened(true);
+                                }}
+                              >
+                                Eliminar Expediente
+                              </Menu.Item>
+                            </Menu.Dropdown>
+                          </Menu>
                         </Table.Td>
                       </Table.Tr>
                     ))}
@@ -562,45 +598,47 @@ export const DocumentsPage: React.FC = () => {
                         {t.is_active ? 'Activa' : 'Inactiva'}
                       </Badge>
                     </Table.Td>
-                    <Table.Td p="sm">
-                      <Group justify="center" gap={6}>
-                        <Tooltip label="Constructor de campos">
-                          <ActionIcon
-                            variant="light"
-                            color="vetGreen"
-                            size="sm"
+                    <Table.Td p="sm" style={{ textAlign: 'center' }}>
+                      <Menu shadow="md" width={220} position="bottom-end" withinPortal>
+                        <Menu.Target>
+                          <ActionIcon variant="subtle" color="gray" size="sm" radius="md" title="Opciones de plantilla">
+                            <IconDotsVertical size={16} />
+                          </ActionIcon>
+                        </Menu.Target>
+                        <Menu.Dropdown>
+                          <Menu.Label>Plantilla: {t.nombre}</Menu.Label>
+                          <Menu.Item
+                            leftSection={<IconTool size={15} color="#16a34a" />}
                             onClick={() => {
                               setTemplateForBuilder(t);
                               setBuilderOpened(true);
                             }}
                           >
-                            <IconTool size={16} />
-                          </ActionIcon>
-                        </Tooltip>
-                        <Tooltip label="Previsualizar">
-                          <ActionIcon
-                            variant="light"
-                            color="blue"
-                            size="sm"
+                            Constructor de Campos
+                          </Menu.Item>
+                          <Menu.Item
+                            leftSection={<IconEye size={15} color="#2563eb" />}
                             onClick={() => {
                               setPreviewTemplate(t);
                               setPreviewOpened(true);
                             }}
                           >
-                            <IconEye size={16} />
-                          </ActionIcon>
-                        </Tooltip>
-                        <Tooltip label="Clonar plantilla">
-                          <ActionIcon
-                            variant="light"
-                            color="gray"
-                            size="sm"
+                            Previsualizar
+                          </Menu.Item>
+                          <Menu.Item
+                            leftSection={<IconCopy size={15} color="#64748b" />}
                             onClick={() => handleDuplicateTemplate(t.id)}
                           >
-                            <IconCopy size={16} />
-                          </ActionIcon>
-                        </Tooltip>
-                      </Group>
+                            Clonar Plantilla
+                          </Menu.Item>
+                          <Menu.Item
+                            leftSection={t.is_active ? <IconToggleRight size={15} color="#16a34a" /> : <IconToggleLeft size={15} color="#94a3b8" />}
+                            onClick={() => handleToggleTemplateActive(t.id)}
+                          >
+                            {t.is_active ? 'Desactivar Plantilla' : 'Activar Plantilla'}
+                          </Menu.Item>
+                        </Menu.Dropdown>
+                      </Menu>
                     </Table.Td>
                   </Table.Tr>
                 ))}
@@ -759,6 +797,35 @@ export const DocumentsPage: React.FC = () => {
         <Paper p="lg" withBorder radius="md" bg="gray.0">
           <div dangerouslySetInnerHTML={{ __html: previewTemplate?.content_preview || '<p>Contenido oficial estructurado.</p>' }} />
         </Paper>
+      </Modal>
+
+      {/* Modal de Confirmación para Eliminar Expediente */}
+      <Modal
+        opened={deleteModalOpened}
+        onClose={() => setDeleteModalOpened(false)}
+        title="Confirmar Eliminación de Expediente"
+        centered
+        radius="md"
+      >
+        <Stack gap="md">
+          <Text size="sm">
+            ¿Está seguro de que desea eliminar el expediente{' '}
+            <b>{expedienteToDelete?.numero_expediente}</b>? Esta acción eliminará el registro documental de la base de datos.
+          </Text>
+          <Group justify="flex-end" mt="md">
+            <Button variant="default" onClick={() => setDeleteModalOpened(false)}>
+              Cancelar
+            </Button>
+            <Button
+              color="red"
+              loading={deleting}
+              leftSection={<IconTrash size={16} />}
+              onClick={confirmDeleteExpediente}
+            >
+              Confirmar Eliminación
+            </Button>
+          </Group>
+        </Stack>
       </Modal>
     </Box>
   );

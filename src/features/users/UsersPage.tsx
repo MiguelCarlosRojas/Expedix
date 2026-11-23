@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import {
   Box, Paper, Title, Text, Button, Table, Badge, ActionIcon, Modal,
-  TextInput, Select, Group, Stack, Card, Avatar, Tooltip, Switch
+  TextInput, Select, Group, Stack, Card, Avatar, Tooltip, Switch, Menu, Divider
 } from '@mantine/core';
 import {
   IconUsers, IconPlus, IconEdit, IconKey, IconCheck, IconAlertTriangle,
-  IconUserCheck, IconUserX, IconPaw
+  IconUserCheck, IconUserX, IconPaw, IconDotsVertical
 } from '@tabler/icons-react';
 import { api } from '../../services/api';
 import { User, Role } from '../../types';
@@ -257,42 +257,40 @@ export const UsersPage: React.FC = () => {
                     <Text size="xs" c="dimmed">{u.created_by_name || 'Sistema'}</Text>
                   </Table.Td>
                   <Table.Td p="sm" style={{ textAlign: 'center' }}>
-                    <Group gap={4} justify="center">
-                      <Tooltip label={u.is_active ? 'Desactivar acceso' : 'Habilitar acceso'}>
-                        <ActionIcon
-                          variant="subtle"
-                          color={u.is_active ? 'orange' : 'teal'}
-                          size="sm"
-                          onClick={() => handleToggleActive(u)}
-                        >
-                          {u.is_active ? <IconUserX size={16} /> : <IconUserCheck size={16} />}
+                    <Menu shadow="md" width={220} position="bottom-end" withinPortal>
+                      <Menu.Target>
+                        <ActionIcon variant="subtle" color="gray" size="sm" radius="md" title="Opciones de usuario">
+                          <IconDotsVertical size={16} />
                         </ActionIcon>
-                      </Tooltip>
-                      <Tooltip label="Editar datos">
-                        <ActionIcon
-                          variant="subtle"
-                          color="blue"
-                          size="sm"
+                      </Menu.Target>
+                      <Menu.Dropdown>
+                        <Menu.Label>Usuario: {u.username}</Menu.Label>
+                        <Menu.Item
+                          leftSection={<IconEdit size={15} color="#2563eb" />}
                           onClick={() => handleOpenEdit(u)}
                         >
-                          <IconEdit size={16} />
-                        </ActionIcon>
-                      </Tooltip>
-                      <Tooltip label="Restablecer contraseña">
-                        <ActionIcon
-                          variant="subtle"
-                          color="gray"
-                          size="sm"
+                          Editar Datos
+                        </Menu.Item>
+                        <Menu.Item
+                          leftSection={<IconKey size={15} color="#64748b" />}
                           onClick={() => {
                             setUserToReset(u);
                             setNewPassword('');
                             setResetModal(true);
                           }}
                         >
-                          <IconKey size={16} />
-                        </ActionIcon>
-                      </Tooltip>
-                    </Group>
+                          Restablecer Contraseña
+                        </Menu.Item>
+                        <Divider />
+                        <Menu.Item
+                          leftSection={u.is_active ? <IconUserX size={15} color="#f97316" /> : <IconUserCheck size={15} color="#16a34a" />}
+                          color={u.is_active ? 'orange' : 'teal'}
+                          onClick={() => handleToggleActive(u)}
+                        >
+                          {u.is_active ? 'Desactivar Acceso' : 'Habilitar Acceso'}
+                        </Menu.Item>
+                      </Menu.Dropdown>
+                    </Menu>
                   </Table.Td>
                 </Table.Tr>
               ))}

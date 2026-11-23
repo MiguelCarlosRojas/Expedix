@@ -29,7 +29,7 @@ import { usePermissions } from '../../hooks/usePermissions';
 
 interface SidebarProps {
   collapsed: boolean;
-  onToggleCollapse: () => void;
+  onToggleCollapse?: () => void;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggleCollapse }) => {
@@ -39,9 +39,15 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggleCollapse })
   // Estados de expansión de submenús
   const isDocActive = location.pathname.startsWith('/app/documentos');
   const isRepActive = location.pathname.startsWith('/app/reportes');
+  const isAdminActive =
+    location.pathname.startsWith('/app/administracion') ||
+    location.pathname.startsWith('/app/roles') ||
+    location.pathname.startsWith('/app/usuarios') ||
+    location.pathname.startsWith('/app/empresa');
 
   const [docsOpened, setDocsOpened] = useState(isDocActive);
   const [reportsOpened, setReportsOpened] = useState(isRepActive);
+  const [adminOpened, setAdminOpened] = useState(isAdminActive);
 
   // Submenús de Documentos Veterinarios
   const docSubItems = [
@@ -58,6 +64,13 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggleCollapse })
     { label: 'R3: Productividad Personal', path: '/app/reportes/3', icon: <IconUsers size={16} /> },
     { label: 'R4: Trazabilidad & Errores', path: '/app/reportes/4', icon: <IconAlertTriangle size={16} /> },
     { label: 'R5: Almacenamiento Drive', path: '/app/reportes/5', icon: <IconCloudCheck size={16} /> },
+  ];
+
+  // Submenús de Administración
+  const adminSubItems = [
+    { label: 'Información Empresa', path: '/app/administracion', icon: <IconBuildingStore size={16} /> },
+    { label: 'Roles & Permisos', path: '/app/roles', icon: <IconShieldLock size={16} /> },
+    { label: 'Usuarios', path: '/app/usuarios', icon: <IconUsers size={16} /> },
   ];
 
   return (
@@ -161,7 +174,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggleCollapse })
               <Tooltip label="Documentos" position="right" disabled={!collapsed} withArrow>
                 <UnstyledButton
                   onClick={() => {
-                    if (collapsed) onToggleCollapse();
+                    if (collapsed && onToggleCollapse) onToggleCollapse();
                     setDocsOpened((o) => !o);
                   }}
                   className={`sidebar-link ${isDocActive ? 'active' : ''}`}
@@ -221,7 +234,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggleCollapse })
               <Tooltip label="Reportes" position="right" disabled={!collapsed} withArrow>
                 <UnstyledButton
                   onClick={() => {
-                    if (collapsed) onToggleCollapse();
+                    if (collapsed && onToggleCollapse) onToggleCollapse();
                     setReportsOpened((o) => !o);
                   }}
                   className={`sidebar-link ${isRepActive ? 'active' : ''}`}
@@ -261,64 +274,53 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggleCollapse })
             </Box>
           )}
 
-          {/* 6. Administración */}
-          {hasModuleAccess('administracion') && (
-            <Tooltip label="Administración" position="right" disabled={!collapsed} withArrow>
-              <NavLink
-                to="/app/administracion"
-                className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
-                style={{ justifyContent: collapsed ? 'center' : 'flex-start' }}
-              >
-                <IconBuildingStore size={20} className="sidebar-icon" />
-                {!collapsed && <Text size="sm" ml="sm">Administración</Text>}
-              </NavLink>
-            </Tooltip>
-          )}
+          {/* 6. Administración (Expandible con las 3 opciones exactas!) */}
+          {(hasModuleAccess('administracion') || hasModuleAccess('roles') || hasModuleAccess('usuarios')) && (
+            <Box>
+              <Tooltip label="Administración" position="right" disabled={!collapsed} withArrow>
+                <UnstyledButton
+                  onClick={() => {
+                    if (collapsed && onToggleCollapse) onToggleCollapse();
+                    setAdminOpened((o) => !o);
+                  }}
+                  className={`sidebar-link ${isAdminActive ? 'active' : ''}`}
+                  style={{ width: '100%', justifyContent: collapsed ? 'center' : 'space-between' }}
+                >
+                  <Group gap={0}>
+                    <IconBuildingStore size={20} className="sidebar-icon" />
+                    {!collapsed && <Text size="sm" ml="sm">Administración</Text>}
+                  </Group>
+                  {!collapsed && (
+                    <Box style={{ display: 'flex', alignItems: 'center' }}>
+                      {adminOpened ? <IconChevronUp size={16} /> : <IconChevronDown size={16} />}
+                    </Box>
+                  )}
+                </UnstyledButton>
+              </Tooltip>
 
-          {/* 7. Roles y Permisos */}
-          {hasModuleAccess('roles') && (
-            <Tooltip label="Roles y Permisos" position="right" disabled={!collapsed} withArrow>
-              <NavLink
-                to="/app/roles"
-                className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
-                style={{ justifyContent: collapsed ? 'center' : 'flex-start' }}
-              >
-                <IconShieldLock size={20} className="sidebar-icon" />
-                {!collapsed && <Text size="sm" ml="sm">Roles y Permisos</Text>}
-              </NavLink>
-            </Tooltip>
-          )}
-
-          {/* 8. Usuarios */}
-          {hasModuleAccess('usuarios') && (
-            <Tooltip label="Usuarios" position="right" disabled={!collapsed} withArrow>
-              <NavLink
-                to="/app/usuarios"
-                className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
-                style={{ justifyContent: collapsed ? 'center' : 'flex-start' }}
-              >
-                <IconUsers size={20} className="sidebar-icon" />
-                {!collapsed && <Text size="sm" ml="sm">Usuarios</Text>}
-              </NavLink>
-            </Tooltip>
+              {/* Subopciones de Administración */}
+              {!collapsed && (
+                <Collapse in={adminOpened}>
+                  <Stack gap={2} pt={2} pb={4}>
+                    {adminSubItems.map((sub) => (
+                      <NavLink
+                        key={sub.path}
+                        to={sub.path}
+                        className={({ isActive }) => `sidebar-sublink ${isActive ? 'active' : ''}`}
+                      >
+                        <Group gap="xs">
+                          {sub.icon}
+                          <Text size="xs">{sub.label}</Text>
+                        </Group>
+                      </NavLink>
+                    ))}
+                  </Stack>
+                </Collapse>
+              )}
+            </Box>
           )}
         </Stack>
       </ScrollArea>
-
-      <Divider color="gray.2" />
-
-      {/* Collapse / Expand Toggle Button */}
-      <Box p="xs" style={{ display: 'flex', justifyContent: collapsed ? 'center' : 'flex-end' }}>
-        <ActionIcon
-          variant="subtle"
-          color="gray"
-          onClick={onToggleCollapse}
-          title={collapsed ? 'Expandir barra lateral' : 'Contraer barra lateral'}
-          size="lg"
-        >
-          {collapsed ? <IconChevronRight size={18} /> : <IconChevronLeft size={18} />}
-        </ActionIcon>
-      </Box>
     </Box>
   );
 };

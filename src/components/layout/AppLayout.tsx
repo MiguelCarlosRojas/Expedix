@@ -27,16 +27,20 @@ const pageTitles: Record<string, { title: string; breadcrumbs: Array<{ label: st
     breadcrumbs: [{ label: 'Sistema' }, { label: 'Reportes' }],
   },
   '/app/administracion': {
-    title: 'Administración Empresarial',
-    breadcrumbs: [{ label: 'Configuración' }, { label: 'Administración' }],
+    title: 'Información Empresa',
+    breadcrumbs: [{ label: 'Administración' }, { label: 'Información Empresa' }],
+  },
+  '/app/empresa': {
+    title: 'Información Empresa',
+    breadcrumbs: [{ label: 'Administración' }, { label: 'Información Empresa' }],
   },
   '/app/roles': {
     title: 'Roles y Matriz de Permisos',
-    breadcrumbs: [{ label: 'Seguridad' }, { label: 'Roles y Permisos' }],
+    breadcrumbs: [{ label: 'Administración' }, { label: 'Roles & Permisos' }],
   },
   '/app/usuarios': {
     title: 'Administración de Usuarios',
-    breadcrumbs: [{ label: 'Seguridad' }, { label: 'Usuarios' }],
+    breadcrumbs: [{ label: 'Administración' }, { label: 'Usuarios' }],
   },
 };
 
@@ -75,6 +79,8 @@ export const AppLayout: React.FC = () => {
         <Header
           title={currentConfig.title}
           breadcrumbs={currentConfig.breadcrumbs}
+          collapsed={collapsed}
+          onToggleCollapse={() => setCollapsed(!collapsed)}
         />
 
         {/* Central Scrollable Area */}

@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import {
-  Group, ActionIcon, Menu, Avatar, Text, Indicator, Popover, Stack, Badge, ScrollArea, Divider, UnstyledButton, Box
+  Group, ActionIcon, Menu, Avatar, Text, Indicator, Popover, Stack, Badge, ScrollArea, Divider, UnstyledButton, Box, Tooltip
 } from '@mantine/core';
 import {
-  IconBell, IconChevronDown, IconUser, IconLogout, IconCheck, IconChecks, IconFileCheck, IconAlertTriangle
+  IconBell, IconChevronDown, IconUser, IconLogout, IconCheck, IconChecks, IconFileCheck, IconAlertTriangle,
+  IconLayoutSidebarLeftCollapse, IconLayoutSidebarLeftExpand, IconShieldCheck
 } from '@tabler/icons-react';
 import { useAuth } from '../../hooks/useAuth';
 import { useNotificationsWebSocket } from '../../hooks/useNotificationsWebSocket';
@@ -13,9 +14,11 @@ import { LogoutConfirmationModal } from './LogoutConfirmationModal';
 interface HeaderProps {
   title: string;
   breadcrumbs?: Array<{ label: string; href?: string }>;
+  collapsed?: boolean;
+  onToggleCollapse?: () => void;
 }
 
-export const Header: React.FC<HeaderProps> = ({ title, breadcrumbs }) => {
+export const Header: React.FC<HeaderProps> = ({ title, breadcrumbs, collapsed, onToggleCollapse }) => {
   const { user } = useAuth();
   const { unreadCount, recentNotifications, markAsRead, markAllAsRead } = useNotificationsWebSocket();
 
@@ -24,27 +27,62 @@ export const Header: React.FC<HeaderProps> = ({ title, breadcrumbs }) => {
 
   return (
     <>
-      <header className="app-header" style={{ height: 64, padding: '0 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        {/* Left: Title & Breadcrumbs */}
-        <Box>
-          <Text fw={700} size="lg" c="dark.8">
-            {title}
-          </Text>
-          {breadcrumbs && breadcrumbs.length > 0 && (
-            <Group gap={4}>
-              {breadcrumbs.map((crumb, idx) => (
-                <React.Fragment key={idx}>
-                  <Text size="xs" c={idx === breadcrumbs.length - 1 ? 'dark.5' : 'dimmed'} fw={idx === breadcrumbs.length - 1 ? 600 : 400}>
-                    {crumb.label}
-                  </Text>
-                  {idx < breadcrumbs.length - 1 && (
-                    <Text size="xs" c="dimmed">/</Text>
-                  )}
-                </React.Fragment>
-              ))}
-            </Group>
+      <header className="app-header" style={{ height: 64, padding: '0 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#ffffff', borderBottom: '1px solid #e2e8f0' }}>
+        {/* Left: Sidebar Toggle Button + Navigation Context & Breadcrumbs */}
+        <Group gap="md" align="center">
+          {onToggleCollapse && (
+            <Tooltip
+              label={collapsed ? 'Expandir barra lateral' : 'Contraer barra lateral'}
+              withArrow
+              position="bottom"
+            >
+              <ActionIcon
+                variant="light"
+                color="vetGreen"
+                size="lg"
+                radius="md"
+                onClick={onToggleCollapse}
+                aria-label="Alternar barra lateral"
+                style={{
+                  border: '1px solid #bbf7d0',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+                }}
+              >
+                {collapsed ? (
+                  <IconLayoutSidebarLeftExpand size={20} color="#15803d" />
+                ) : (
+                  <IconLayoutSidebarLeftCollapse size={20} color="#15803d" />
+                )}
+              </ActionIcon>
+            </Tooltip>
           )}
-        </Box>
+
+          <Box>
+            <Group gap="xs" align="center">
+              <Text fw={700} size="md" c="dark.8">
+                {title}
+              </Text>
+              <Badge size="xs" variant="light" color="vetGreen" radius="sm">
+                {user?.role_details?.name || (user?.is_superuser ? 'Superadministrador' : 'Personal Veterinario')}
+              </Badge>
+            </Group>
+
+            {breadcrumbs && breadcrumbs.length > 0 && (
+              <Group gap={4} mt={2}>
+                {breadcrumbs.map((crumb, idx) => (
+                  <React.Fragment key={idx}>
+                    <Text size="xs" c={idx === breadcrumbs.length - 1 ? 'vetGreen.8' : 'dimmed'} fw={idx === breadcrumbs.length - 1 ? 600 : 400}>
+                      {crumb.label}
+                    </Text>
+                    {idx < breadcrumbs.length - 1 && (
+                      <Text size="xs" c="dimmed">/</Text>
+                    )}
+                  </React.Fragment>
+                ))}
+              </Group>
+            )}
+          </Box>
+        </Group>
 
         {/* Right: Notifications Bell and User Profile Menu */}
         <Group gap="md">

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Box, Paper, Title, Text, TextInput, PasswordInput, Button,
-  Checkbox, Group, Stack, Alert, ThemeIcon, Badge, Grid, Container
+  Checkbox, Group, Stack, Alert, ThemeIcon, Badge, Container
 } from '@mantine/core';
 import { useForm } from '@mantine/form';
 import {
@@ -47,25 +47,38 @@ export const LoginPage: React.FC = () => {
   };
 
   return (
-    <Box style={{ minHeight: '100vh', display: 'flex', backgroundColor: '#f8fafc', overflow: 'hidden' }}>
-      <Grid gutter={0} style={{ width: '100vw', minHeight: '100vh' }}>
-        {/* ==================================================================== */}
-        {/* SECCIÓN IZQUIERDA: Composición Visual Animalista y Veterinaria       */}
-        {/* ==================================================================== */}
-        <Grid.Col
-          span={{ base: 0, lg: 6 }}
-          visibleFrom="lg"
-          style={{
-            position: 'relative',
-            background: 'linear-gradient(145deg, #064e3b 0%, #065f46 45%, #047857 100%)',
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'space-between',
-            padding: '50px 60px',
-            color: '#ffffff',
-            overflow: 'hidden',
-          }}
-        >
+    <Box
+      style={{
+        width: '100%',
+        height: '100vh',
+        minHeight: '100vh',
+        display: 'flex',
+        backgroundColor: '#ffffff',
+        overflow: 'hidden',
+        margin: 0,
+        padding: 0,
+      }}
+    >
+      {/* ==================================================================== */}
+      {/* SECCIÓN IZQUIERDA: Composición Visual Animalista y Veterinaria       */}
+      {/* ==================================================================== */}
+      <Box
+        visibleFrom="lg"
+        style={{
+          flex: '0 0 50%',
+          width: '50%',
+          height: '100vh',
+          position: 'relative',
+          background: 'linear-gradient(145deg, #064e3b 0%, #065f46 45%, #047857 100%)',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'space-between',
+          padding: '44px 56px',
+          color: '#ffffff',
+          overflow: 'hidden',
+          boxSizing: 'border-box',
+        }}
+      >
           {/* Patrón de huellas y círculos sutiles en el fondo */}
           <Box
             style={{
@@ -201,19 +214,22 @@ export const LoginPage: React.FC = () => {
               </Group>
             </Group>
           </Box>
-        </Grid.Col>
+        </Box>
 
         {/* ==================================================================== */}
         {/* SECCIÓN DERECHA: Formulario de Autenticación                        */}
         {/* ==================================================================== */}
-        <Grid.Col
-          span={{ base: 12, lg: 6 }}
+        <Box
           style={{
+            flex: 1,
+            height: '100vh',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             backgroundColor: '#ffffff',
-            padding: '40px 24px',
+            padding: '32px 24px',
+            overflowY: 'auto',
+            boxSizing: 'border-box',
           }}
         >
           <Container size={440} p={0} style={{ width: '100%' }} className="anim-fade-in">
@@ -315,8 +331,7 @@ export const LoginPage: React.FC = () => {
               </Text>
             </Paper>
           </Container>
-        </Grid.Col>
-      </Grid>
+        </Box>
     </Box>
   );
 };

@@ -133,9 +133,6 @@ export const ReportsPage: React.FC = () => {
               <Badge color="vetGreen" variant="light" size="sm">
                 Auditoría Veterinaria Certificada
               </Badge>
-              <Badge color="gray" variant="outline" size="sm">
-                {reportMeta.badge}
-              </Badge>
             </Group>
             <Title order={2} fw={800} c="dark.8">
               {reportMeta.title}
