@@ -2,12 +2,12 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Box, Paper, Title, Text, TextInput, PasswordInput, Button,
-  Checkbox, Group, Stack, Alert, ThemeIcon, Badge, Container
+  Checkbox, Group, Stack, ThemeIcon, Badge, Container
 } from '@mantine/core';
 import { useForm } from '@mantine/form';
 import {
   IconPaw, IconStethoscope, IconShieldCheck, IconHeartbeat,
-  IconLock, IconUser, IconAlertCircle, IconArrowRight, IconHeartHandshake, IconFileText
+  IconLock, IconUser, IconArrowRight, IconHeartHandshake, IconFileText
 } from '@tabler/icons-react';
 import { useAuth } from '../../hooks/useAuth';
 
@@ -15,7 +15,6 @@ export const LoginPage: React.FC = () => {
   const { login } = useAuth();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const form = useForm({
     initialValues: {
@@ -24,23 +23,24 @@ export const LoginPage: React.FC = () => {
       remember: true,
     },
     validate: {
-      username: (val) => (val.trim() ? null : 'Ingrese su usuario o correo veterinario.'),
-      password: (val) => (val ? null : 'Ingrese su contraseña de acceso.'),
+      username: (val) => (val.trim() ? null : 'Ingrese su usuario.'),
+      password: (val) => (val ? null : 'Ingrese su contraseña.'),
     },
   });
 
   const handleSubmit = async (values: typeof form.values) => {
     setLoading(true);
-    setErrorMessage(null);
     try {
-      const ok = await login({ username: values.username, password: values.password });
+      const ok = await login({
+        username: values.username,
+        password: values.password,
+        remember: values.remember,
+      });
       if (ok) {
         navigate('/app/inicio', { replace: true });
-      } else {
-        setErrorMessage('Credenciales inválidas. Por favor verifique su usuario y contraseña.');
       }
     } catch (err: any) {
-      setErrorMessage(err.message || 'Error al conectar con el servidor.');
+      // Discretely handled via toast notifications
     } finally {
       setLoading(false);
     }
@@ -275,30 +275,30 @@ export const LoginPage: React.FC = () => {
               </Text>
             </Box>
 
-            {errorMessage && (
-              <Alert icon={<IconAlertCircle size={18} />} title="Atención" color="red" mb="lg" radius="md">
-                {errorMessage}
-              </Alert>
-            )}
-
-            <form onSubmit={form.onSubmit(handleSubmit)}>
+            <form onSubmit={form.onSubmit(handleSubmit)} autoComplete="on" method="post">
               <Stack gap="md">
                 <TextInput
-                  label="Usuario o Correo Institucional"
+                  label="Usuario"
                   placeholder="admin"
                   required
                   size="md"
                   radius="md"
+                  id="username"
+                  name="username"
+                  autoComplete="username"
                   leftSection={<IconUser size={18} color="#16a34a" />}
                   {...form.getInputProps('username')}
                 />
 
                 <PasswordInput
-                  label="Contraseña de Acceso"
-                  placeholder="Tu contraseña registrada"
+                  label="Contraseña"
+                  placeholder="••••••••"
                   required
                   size="md"
                   radius="md"
+                  id="password"
+                  name="password"
+                  autoComplete="current-password"
                   leftSection={<IconLock size={18} color="#16a34a" />}
                   {...form.getInputProps('password')}
                 />

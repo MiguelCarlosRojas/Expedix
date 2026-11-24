@@ -3,10 +3,16 @@ import { api } from '../services/api';
 import { User } from '../types';
 import { notifications } from '@mantine/notifications';
 
+interface LoginCredentials {
+  username: string;
+  password: string;
+  remember?: boolean;
+}
+
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  login: (credentials: { username: string; password: string }) => Promise<boolean>;
+  login: (credentials: LoginCredentials) => Promise<boolean>;
   logout: () => Promise<void>;
   updateUser: (updatedUser: User) => void;
   refreshUser: () => Promise<void>;
@@ -33,22 +39,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     refreshUser();
   }, []);
 
-  const login = async (credentials: { username: string; password: string }): Promise<boolean> => {
+  const login = async (credentials: LoginCredentials): Promise<boolean> => {
     try {
       const res = await api.post('/auth/login/', credentials);
       setUser(res.data.user);
       notifications.show({
-        title: 'Bienvenido',
-        message: `Sesión iniciada como ${res.data.user.full_name}`,
+        title: 'Acceso Autorizado',
+        message: `Bienvenido a Expedix Vet, ${res.data.user.full_name}`,
         color: 'teal',
       });
       return true;
     } catch (err: any) {
-      const message = err.response?.data?.detail || 'Error al iniciar sesión.';
+      const message = err.response?.data?.detail || 'Usuario o contraseña incorrectos. Intente nuevamente.';
       notifications.show({
-        title: 'Error de Autenticación',
+        title: 'Acceso Denegado',
         message,
         color: 'red',
+        autoClose: 4000,
       });
       return false;
     }
