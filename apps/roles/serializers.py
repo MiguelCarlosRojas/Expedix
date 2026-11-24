@@ -7,6 +7,7 @@ class PermissionSerializer(serializers.ModelSerializer):
         fields = ['id', 'module', 'action', 'codename', 'name', 'description']
 
 class RoleSerializer(serializers.ModelSerializer):
+    code = serializers.CharField(max_length=60, required=False)
     permissions = serializers.SerializerMethodField()
     permission_ids = serializers.ListField(
         child=serializers.IntegerField(), write_only=True, required=False
@@ -30,6 +31,15 @@ class RoleSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         permission_ids = validated_data.pop('permission_ids', [])
+        if not validated_data.get('code'):
+            import re
+            base_code = re.sub(r'[^A-Z0-9]', '_', validated_data.get('name', '').upper()).strip('_') or 'ROL'
+            code = base_code
+            counter = 1
+            while Role.objects.filter(code=code).exists():
+                code = f"{base_code}_{counter}"
+                counter += 1
+            validated_data['code'] = code
         role = Role.objects.create(**validated_data)
         if permission_ids:
             perms = Permission.objects.filter(id__in=permission_ids)

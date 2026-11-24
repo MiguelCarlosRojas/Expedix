@@ -41,6 +41,7 @@ class UserSerializer(serializers.ModelSerializer):
 
 class UserCreateSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, required=True, min_length=6)
+    job_title = serializers.CharField(max_length=100, required=False, allow_blank=True, default='')
 
     class Meta:
         model = User
