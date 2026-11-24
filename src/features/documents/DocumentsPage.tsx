@@ -393,8 +393,8 @@ export const DocumentsPage: React.FC = () => {
                   onAction={handleOpenWizard}
                 />
               ) : (
-                <Table highlightOnHover withTableBorder withColumnBorders>
-                  <Table.Thead bg="gray.0">
+                <Table highlightOnHover withTableBorder={false} withColumnBorders={false}>
+                  <Table.Thead>
                     <Table.Tr>
                       <SortableTh columnKey="numero_expediente" sortConfig={sortConfig} onSort={requestSort} width={150}>
                         N° Expediente
@@ -526,8 +526,8 @@ export const DocumentsPage: React.FC = () => {
       {activeTab === 'templates' && (
         <Stack gap="md">
           <Paper p="md" radius="md" withBorder bg="white" shadow="xs" style={{ overflowX: 'auto' }}>
-            <Table highlightOnHover withTableBorder withColumnBorders>
-              <Table.Thead bg="gray.0">
+            <Table highlightOnHover withTableBorder={false} withColumnBorders={false}>
+              <Table.Thead>
                 <Table.Tr>
                   <SortableTh columnKey="nombre" sortConfig={templateSortConfig} onSort={requestTemplateSort}>
                     Nombre de Plantilla

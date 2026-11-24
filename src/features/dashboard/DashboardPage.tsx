@@ -1,30 +1,20 @@
 import React, { useEffect, useState } from 'react';
 import {
-  SimpleGrid, Paper, Text, Group, ThemeIcon, Title, Stack, Box, Select,
-  Skeleton, Table, Badge, Card, RingProgress, Tabs, Button, ActionIcon
+  SimpleGrid, Paper, Text, Group, ThemeIcon, Title, Stack, Box,
+  Table, Badge, Card
 } from '@mantine/core';
-import { DateInput } from '@mantine/dates';
-import { BarChart, DonutChart, LineChart, AreaChart } from '@mantine/charts';
+import { BarChart, DonutChart } from '@mantine/charts';
 import {
-  IconFiles, IconFileCheck, IconClock, IconLoader2, IconAlertCircle,
-  IconTemplate, IconBrandGoogleDrive, IconUsers, IconCircleCheck, IconCpu, IconDatabase,
-  IconPaw, IconStethoscope, IconHeartbeat, IconFileCertificate,
-  IconCalendar, IconFilter, IconFilterOff, IconRefresh
+  IconFileCheck, IconClock, IconLoader2, IconAlertCircle,
+  IconTemplate, IconBrandGoogleDrive, IconUsers, IconCircleCheck,
+  IconPaw
 } from '@tabler/icons-react';
 import { api } from '../../services/api';
 import { DashboardStats, DashboardCharts, IntegrationsStatus } from '../../types';
 import { DashboardSkeleton } from '../../components/ui/SkeletonLoaders';
-import { useUrlFilters } from '../../hooks/useUrlFilters';
+import { CustomBadge } from '../../components/ui/CustomBadge';
 
 export const DashboardPage: React.FC = () => {
-  const { getFilter, setFilter, clearFilters } = useUrlFilters();
-  const startDateStr = getFilter('start_date', '');
-  const endDateStr = getFilter('end_date', '');
-  const statusFilter = getFilter('estado', '');
-
-  const startDate = startDateStr ? new Date(startDateStr) : null;
-  const endDate = endDateStr ? new Date(endDateStr) : null;
-
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [charts, setCharts] = useState<DashboardCharts | null>(null);
   const [integrations, setIntegrations] = useState<IntegrationsStatus | null>(null);
@@ -34,16 +24,9 @@ export const DashboardPage: React.FC = () => {
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
-      const params = new URLSearchParams();
-      if (startDateStr) params.append('start_date', startDateStr);
-      if (endDateStr) params.append('end_date', endDateStr);
-      if (statusFilter) params.append('estado', statusFilter);
-
-      const qs = params.toString() ? `?${params.toString()}` : '';
-
       const [statsRes, chartsRes, intRes, actRes] = await Promise.all([
-        api.get<DashboardStats>(`/dashboard/stats/${qs}`),
-        api.get<DashboardCharts>(`/dashboard/charts/${qs}`),
+        api.get<DashboardStats>('/dashboard/stats/'),
+        api.get<DashboardCharts>('/dashboard/charts/'),
         api.get<IntegrationsStatus>('/dashboard/integrations/'),
         api.get<any>('/dashboard/activity/'),
       ]);
@@ -60,97 +43,94 @@ export const DashboardPage: React.FC = () => {
 
   useEffect(() => {
     fetchDashboardData();
-  }, [startDateStr, endDateStr, statusFilter]);
-
-  const handleDateChange = (field: 'start_date' | 'end_date', date: Date | null) => {
-    const formatted = date ? date.toISOString().split('T')[0] : '';
-    setFilter(field, formatted);
-  };
-
-  const hasActiveFilters = Boolean(startDateStr || endDateStr || statusFilter);
+  }, []);
 
   return (
     <Box className="anim-fade-in">
-      {/* Header Contextual del Dashboard */}
-      <Box mb="lg">
-        <Group gap="xs" mb={4}>
-          <Badge color="vetGreen" variant="light" size="sm" leftSection={<IconHeartbeat size={13} />}>
-            Monitoreo Clínico & Operativo en Tiempo Real
-          </Badge>
-          <Badge color="gray" variant="outline" size="sm">
-            Actualización Automática
-          </Badge>
-        </Group>
-        <Title order={2} fw={800} c="dark.8">
-          Panel de Control Clínico & Estadísticas
-        </Title>
-        <Text c="dimmed" size="sm" mt={2}>
-          Seguimiento de expedientes veterinarios, emisión de certificados de salud, almacenamiento en la nube y rendimiento del equipo.
-        </Text>
-      </Box>
+      {/* Encabezado Principal de Bienvenida con Identidad Expedix Vet */}
+      <Paper
+        p={{ base: 'lg', md: 'xl' }}
+        radius="lg"
+        mb="xl"
+        style={{
+          background: 'linear-gradient(135deg, #065f46 0%, #047857 50%, #0d9488 100%)',
+          color: '#ffffff',
+          position: 'relative',
+          overflow: 'hidden',
+          boxShadow: '0 8px 24px -4px rgba(6, 95, 70, 0.22)',
+        }}
+      >
+        {/* Decoraciones vectoriales sutiles de fondo */}
+        <Box
+          style={{
+            position: 'absolute',
+            top: -40,
+            right: -40,
+            width: 220,
+            height: 220,
+            borderRadius: '50%',
+            background: 'radial-gradient(circle, rgba(134, 239, 172, 0.18) 0%, transparent 70%)',
+            pointerEvents: 'none',
+          }}
+        />
+        <Box
+          style={{
+            position: 'absolute',
+            bottom: -30,
+            right: 120,
+            width: 160,
+            height: 160,
+            borderRadius: '50%',
+            background: 'radial-gradient(circle, rgba(94, 234, 212, 0.18) 0%, transparent 70%)',
+            pointerEvents: 'none',
+          }}
+        />
 
-      {/* Barra de Filtros Sincronizada con URL Query Parameters */}
-      <Paper p="sm" radius="md" withBorder bg="white" shadow="xs" mb="lg">
-        <Group justify="space-between" wrap="wrap">
-          <Group gap="sm" wrap="wrap">
-            <DateInput
-              placeholder="Desde (dd/mm/aaaa)"
-              value={startDate}
-              onChange={(date) => handleDateChange('start_date', date)}
-              leftSection={<IconCalendar size={16} color="#16a34a" />}
-              clearable
-              size="xs"
-              radius="md"
-              style={{ width: 180 }}
-            />
-            <DateInput
-              placeholder="Hasta (dd/mm/aaaa)"
-              value={endDate}
-              onChange={(date) => handleDateChange('end_date', date)}
-              leftSection={<IconCalendar size={16} color="#16a34a" />}
-              clearable
-              size="xs"
-              radius="md"
-              style={{ width: 180 }}
-            />
-            <Select
-              placeholder="Estado clínico"
-              data={[
-                { value: '', label: 'Todos los estados' },
-                { value: 'GENERADO', label: 'Completados' },
-                { value: 'PENDIENTE', label: 'Pendientes' },
-                { value: 'EN_PROCESO', label: 'En Proceso' },
-                { value: 'ERROR', label: 'Con Errores' },
-              ]}
-              value={statusFilter}
-              onChange={(val) => setFilter('estado', val || '')}
-              clearable
-              size="xs"
-              radius="md"
-              style={{ width: 170 }}
-            />
-            {hasActiveFilters && (
-              <Button
-                variant="subtle"
-                color="gray"
-                size="xs"
-                leftSection={<IconFilterOff size={14} />}
-                onClick={() => clearFilters()}
-              >
-                Limpiar Filtros
-              </Button>
-            )}
-          </Group>
+        <Group justify="space-between" align="center" wrap="nowrap" style={{ position: 'relative', zIndex: 1 }}>
+          <Box style={{ flex: 1, minWidth: 0 }}>
+            <Badge
+              size="sm"
+              variant="light"
+              color="green"
+              mb="xs"
+              leftSection={<IconPaw size={13} color="#86efac" />}
+              styles={{
+                root: {
+                  backgroundColor: 'rgba(255, 255, 255, 0.15)',
+                  color: '#ffffff',
+                  fontWeight: 600,
+                  backdropFilter: 'blur(4px)',
+                },
+              }}
+            >
+              Expedix Vet • Portal Clínico
+            </Badge>
+            <Title order={1} fw={900} style={{ fontSize: '2.1rem', lineHeight: 1.18, color: '#ffffff', marginBottom: 8 }}>
+              Bienvenido a Expedix Vet
+            </Title>
+            <Text
+              size="md"
+              style={{
+                color: '#d1fae5',
+                lineHeight: 1.5,
+                width: '100%',
+              }}
+            >
+              Todo lo que necesitas para gestionar la atención y el bienestar animal desde un solo lugar.
+            </Text>
+          </Box>
 
-          <Button
-            variant="light"
-            color="vetGreen"
-            size="xs"
-            leftSection={<IconRefresh size={14} />}
-            onClick={fetchDashboardData}
-          >
-            Actualizar Métricas
-          </Button>
+          <Box visibleFrom="sm" style={{ opacity: 0.9, flexShrink: 0, marginLeft: 24 }}>
+            <ThemeIcon
+              size={76}
+              radius="xl"
+              variant="light"
+              color="green"
+              styles={{ root: { backgroundColor: 'rgba(255, 255, 255, 0.12)' } }}
+            >
+              <IconPaw size={44} color="#86efac" />
+            </ThemeIcon>
+          </Box>
         </Group>
       </Paper>
 
@@ -358,36 +338,36 @@ export const DashboardPage: React.FC = () => {
                   <Badge size="sm" color="vetGreen" variant="light">En Vivo</Badge>
                 </Group>
 
-                <Table highlightOnHover withTableBorder={false}>
-                  <Table.Thead bg="gray.0">
-                    <Table.Tr>
-                      <Table.Th>N° Expediente</Table.Th>
-                      <Table.Th>Paciente / Asunto</Table.Th>
-                      <Table.Th>Estado</Table.Th>
-                      <Table.Th>Fecha</Table.Th>
-                    </Table.Tr>
-                  </Table.Thead>
-                  <Table.Tbody>
-                    {(activity?.recent_operations || []).slice(0, 5).map((op, i) => (
-                      <Table.Tr key={i}>
-                        <Table.Td>
-                          <Text fw={700} size="xs" c="vetGreen.8">{op.numero_expediente}</Text>
-                        </Table.Td>
-                        <Table.Td>
-                          <Text size="xs" lineClamp={1}>{op.asunto}</Text>
-                        </Table.Td>
-                        <Table.Td>
-                          <Badge size="xs" color={op.estado === 'GENERADO' ? 'green' : 'yellow'} variant="light">
-                            {op.estado}
-                          </Badge>
-                        </Table.Td>
-                        <Table.Td>
-                          <Text size="11px" c="dimmed">{op.updated_at ? op.updated_at.split('T')[0] : 'Hoy'}</Text>
-                        </Table.Td>
+                <div className="vet-table-container">
+                  <Table highlightOnHover withTableBorder={false}>
+                    <Table.Thead>
+                      <Table.Tr>
+                        <Table.Th>N° Expediente</Table.Th>
+                        <Table.Th>Paciente / Asunto</Table.Th>
+                        <Table.Th style={{ textAlign: 'center' }}>Estado</Table.Th>
+                        <Table.Th>Fecha</Table.Th>
                       </Table.Tr>
-                    ))}
-                  </Table.Tbody>
-                </Table>
+                    </Table.Thead>
+                    <Table.Tbody>
+                      {(activity?.recent_operations || []).slice(0, 5).map((op, i) => (
+                        <Table.Tr key={i}>
+                          <Table.Td>
+                            <Text fw={700} size="xs" c="vetGreen.8">{op.numero_expediente}</Text>
+                          </Table.Td>
+                          <Table.Td>
+                            <Text size="xs" fw={500} lineClamp={1}>{op.asunto}</Text>
+                          </Table.Td>
+                          <Table.Td style={{ textAlign: 'center' }}>
+                            <CustomBadge status={op.estado} />
+                          </Table.Td>
+                          <Table.Td>
+                            <Text size="11px" c="dimmed">{op.updated_at ? op.updated_at.split('T')[0] : 'Hoy'}</Text>
+                          </Table.Td>
+                        </Table.Tr>
+                      ))}
+                    </Table.Tbody>
+                  </Table>
+                </div>
               </Paper>
             </Box>
 

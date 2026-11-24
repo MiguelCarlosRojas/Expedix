@@ -32,6 +32,9 @@ export const SortableTh: React.FC<SortableThProps> = ({
         textAlign: align,
         width: width,
         cursor: 'pointer',
+        userSelect: 'none',
+        backgroundColor: isSorted ? '#ecfdf5' : undefined,
+        borderBottom: isSorted ? '2px solid #16a34a' : undefined,
       }}
       title={`Ordenar por ${typeof children === 'string' ? children : columnKey}`}
     >
@@ -40,13 +43,26 @@ export const SortableTh: React.FC<SortableThProps> = ({
         gap="xs"
         wrap="nowrap"
       >
-        <Text size="xs" fw={700} c={isSorted ? 'vetGreen.8' : 'gray.7'} style={{ userSelect: 'none' }}>
+        <Text
+          size="xs"
+          fw={isSorted ? 800 : 700}
+          c={isSorted ? 'vetGreen.8' : 'gray.7'}
+          style={{ letterSpacing: '0.02em', textTransform: 'uppercase' }}
+        >
           {children}
         </Text>
-        <Box style={{ display: 'flex', alignItems: 'center' }}>
-          {isAsc && <IconSortAscending size={15} color="#16a34a" />}
-          {isDesc && <IconSortDescending size={15} color="#16a34a" />}
-          {!isSorted && <IconArrowsSort size={14} color="#94a3b8" style={{ opacity: 0.7 }} />}
+        <Box
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            padding: 2,
+            borderRadius: 4,
+            backgroundColor: isSorted ? '#dcfce7' : 'transparent',
+          }}
+        >
+          {isAsc && <IconSortAscending size={15} color="#15803d" stroke={2.2} />}
+          {isDesc && <IconSortDescending size={15} color="#15803d" stroke={2.2} />}
+          {!isSorted && <IconArrowsSort size={14} color="#94a3b8" style={{ opacity: 0.6 }} />}
         </Box>
       </Group>
     </Table.Th>

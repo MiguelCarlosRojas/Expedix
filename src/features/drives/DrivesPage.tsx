@@ -491,8 +491,8 @@ export const DrivesPage: React.FC = () => {
       ) : (
         /* List View */
         <Card p={0} radius="md" withBorder bg="white">
-          <Table highlightOnHover verticalSpacing="sm">
-            <Table.Thead bg="gray.0">
+          <Table highlightOnHover verticalSpacing="sm" withTableBorder={false} withColumnBorders={false}>
+            <Table.Thead>
               <Table.Tr>
                 <Table.Th>Nombre</Table.Th>
                 <Table.Th>Propietario</Table.Th>

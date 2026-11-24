@@ -4,7 +4,7 @@ import {
   TextInput, Textarea, Group, Stack, Checkbox, SimpleGrid, Card, Tooltip, Menu
 } from '@mantine/core';
 import {
-  IconShieldLock, IconPlus, IconCopy, IconEdit, IconTrash, IconCheck, IconAlertTriangle,
+  IconShieldLock, IconPlus, IconCopy, IconEdit, IconCheck, IconAlertTriangle,
   IconPaw, IconDotsVertical
 } from '@tabler/icons-react';
 import { api } from '../../services/api';
@@ -23,7 +23,6 @@ export const RolesPage: React.FC = () => {
   const [modalOpened, setModalOpened] = useState(false);
   const [editingRole, setEditingRole] = useState<Role | null>(null);
   const [roleName, setRoleName] = useState('');
-  const [roleCode, setRoleCode] = useState('');
   const [roleDesc, setRoleDesc] = useState('');
   const [selectedPermIds, setSelectedPermIds] = useState<number[]>([]);
   const [saving, setSaving] = useState(false);
@@ -54,7 +53,6 @@ export const RolesPage: React.FC = () => {
   const handleOpenCreate = () => {
     setEditingRole(null);
     setRoleName('');
-    setRoleCode('');
     setRoleDesc('');
     setSelectedPermIds([]);
     setModalOpened(true);
@@ -63,7 +61,6 @@ export const RolesPage: React.FC = () => {
   const handleOpenEdit = (role: Role) => {
     setEditingRole(role);
     setRoleName(role.name);
-    setRoleCode(role.code);
     setRoleDesc(role.description);
     const existingIds = (role.permissions || []).map((p) => p.id);
     setSelectedPermIds(existingIds);
@@ -84,14 +81,14 @@ export const RolesPage: React.FC = () => {
     if (!roleName.trim()) return;
     setSaving(true);
     try {
-      const payload = {
+      const payload: Record<string, any> = {
         name: roleName,
-        code: roleCode || roleName.toUpperCase().replace(/\s+/g, '_'),
         description: roleDesc,
         permission_ids: selectedPermIds,
       };
 
       if (editingRole) {
+        payload.code = editingRole.code;
         await api.put(`/roles/${editingRole.id}/`, payload);
         notifications.show({ title: 'Rol actualizado', message: 'Cambios guardados con éxito.', color: 'teal' });
       } else {
@@ -149,7 +146,7 @@ export const RolesPage: React.FC = () => {
             styles={{
               root: {
                 background: 'linear-gradient(135deg, #16a34a 0%, #15803d 100%)',
-                boxShadow: '0 2px 8px rgba(22, 163, 74, 0.25)',
+                boxShadow: '0 4px 12px rgba(22, 163, 74, 0.25)',
               },
             }}
           >
@@ -160,28 +157,25 @@ export const RolesPage: React.FC = () => {
 
       {/* Roles List */}
       {loading ? (
-        <TableSkeleton rows={5} columns={6} />
+        <TableSkeleton rows={5} columns={5} />
       ) : (
         <Card p={0} radius="md" withBorder bg="white" shadow="xs" style={{ overflowX: 'auto' }}>
-          <Table highlightOnHover verticalSpacing="sm" withTableBorder withColumnBorders>
-            <Table.Thead bg="gray.0">
+          <Table highlightOnHover verticalSpacing="sm" withTableBorder={false} withColumnBorders={false}>
+            <Table.Thead>
               <Table.Tr>
                 <SortableTh columnKey="name" sortConfig={sortConfig} onSort={requestSort}>
                   Nombre del Rol
                 </SortableTh>
-                <SortableTh columnKey="code" sortConfig={sortConfig} onSort={requestSort} width={180}>
-                  Código de Sistema
-                </SortableTh>
                 <SortableTh columnKey="description" sortConfig={sortConfig} onSort={requestSort}>
                   Descripción
                 </SortableTh>
-                <SortableTh columnKey="user_count" sortConfig={sortConfig} onSort={requestSort} align="center" width={140}>
+                <SortableTh columnKey="user_count" sortConfig={sortConfig} onSort={requestSort} align="center" width={150}>
                   Usuarios Asignados
                 </SortableTh>
-                <SortableTh columnKey="is_active" sortConfig={sortConfig} onSort={requestSort} align="center" width={120}>
+                <SortableTh columnKey="is_active" sortConfig={sortConfig} onSort={requestSort} align="center" width={130}>
                   Estado
                 </SortableTh>
-                <Table.Th style={{ textAlign: 'center', width: 130 }}>Acciones</Table.Th>
+                <Table.Th style={{ textAlign: 'center', width: 120 }}>Acciones</Table.Th>
               </Table.Tr>
             </Table.Thead>
             <Table.Tbody>
@@ -193,11 +187,8 @@ export const RolesPage: React.FC = () => {
                       <Text size="sm">{role.name}</Text>
                     </Group>
                   </Table.Td>
-                  <Table.Td p="sm">
-                    <Text size="xs" ff="monospace" c="dimmed">{role.code}</Text>
-                  </Table.Td>
-                  <Table.Td p="sm" style={{ maxWidth: 320 }}>
-                    <Text size="xs" c="dimmed" lineClamp={2}>{role.description}</Text>
+                  <Table.Td p="sm" style={{ maxWidth: 380 }}>
+                    <Text size="xs" c="dimmed" lineClamp={2}>{role.description || 'Sin descripción detallada'}</Text>
                   </Table.Td>
                   <Table.Td p="sm" style={{ textAlign: 'center' }}>
                     <Badge variant="light" color="vetGreen" size="xs">
@@ -248,22 +239,13 @@ export const RolesPage: React.FC = () => {
         size="xl"
       >
         <Stack gap="md">
-          <Group grow>
-            <TextInput
-              label="Nombre del Rol"
-              placeholder="Ej: Médico Veterinario Residente"
-              value={roleName}
-              onChange={(e) => setRoleName(e.currentTarget.value)}
-              required
-            />
-            <TextInput
-              label="Código de Sistema"
-              placeholder="VETERINARIO_RESIDENTE"
-              value={roleCode}
-              onChange={(e) => setRoleCode(e.currentTarget.value)}
-              disabled={!!editingRole?.is_system}
-            />
-          </Group>
+          <TextInput
+            label="Nombre del Rol"
+            placeholder="Ej: Médico Veterinario Residente"
+            value={roleName}
+            onChange={(e) => setRoleName(e.currentTarget.value)}
+            required
+          />
 
           <Textarea
             label="Descripción del Rol"
@@ -280,11 +262,11 @@ export const RolesPage: React.FC = () => {
               <Group gap="xs">
                 <Button
                   size="xs"
-                  variant="subtle"
+                  variant="light"
                   color="vetGreen"
                   onClick={() => setSelectedPermIds(allPermissions.map((p) => p.id))}
                 >
-                  Seleccionar todos
+                  Seleccionar Todos
                 </Button>
                 <Button
                   size="xs"
@@ -292,31 +274,48 @@ export const RolesPage: React.FC = () => {
                   color="gray"
                   onClick={() => setSelectedPermIds([])}
                 >
-                  Limpiar
+                  Deseleccionar
                 </Button>
               </Group>
             </Group>
 
-            <Stack gap="sm" style={{ maxHeight: 380, overflowY: 'auto' }}>
-              {Object.entries(permsByModule).map(([mod, perms]) => (
-                <Paper key={mod} p="xs" withBorder radius="md" bg="gray.0">
-                  <Text fw={700} size="xs" tt="uppercase" c="vetGreen.8" mb="xs">
-                    Módulo: {mod}
-                  </Text>
-                  <SimpleGrid cols={{ base: 2, sm: 3, md: 4 }} spacing="xs">
-                    {perms.map((p) => (
+            <Stack gap="md" style={{ maxHeight: 380, overflowY: 'auto' }} p="xs">
+              {Object.entries(permsByModule).map(([moduleName, perms]) => {
+                const allModuleSelected = perms.every((p) => selectedPermIds.includes(p.id));
+                return (
+                  <Paper key={moduleName} p="sm" radius="md" withBorder bg="gray.0">
+                    <Group justify="space-between" mb="xs">
+                      <Text fw={700} size="xs" tt="uppercase" c="vetGreen.9">
+                        Módulo: {moduleName}
+                      </Text>
                       <Checkbox
-                        key={p.id}
-                        label={p.name.replace(` en ${mod}`, '')}
                         size="xs"
-                        color="vetGreen"
-                        checked={selectedPermIds.includes(p.id)}
-                        onChange={() => togglePermission(p.id)}
+                        label="Todos"
+                        checked={allModuleSelected}
+                        onChange={(e) => {
+                          const ids = perms.map((p) => p.id);
+                          if (e.currentTarget.checked) {
+                            setSelectedPermIds((prev) => [...new Set([...prev, ...ids])]);
+                          } else {
+                            setSelectedPermIds((prev) => prev.filter((id) => !ids.includes(id)));
+                          }
+                        }}
                       />
-                    ))}
-                  </SimpleGrid>
-                </Paper>
-              ))}
+                    </Group>
+                    <SimpleGrid cols={{ base: 1, sm: 2, md: 3 }} spacing="xs">
+                      {perms.map((p) => (
+                        <Checkbox
+                          key={p.id}
+                          size="xs"
+                          label={p.name}
+                          checked={selectedPermIds.includes(p.id)}
+                          onChange={() => togglePermission(p.id)}
+                        />
+                      ))}
+                    </SimpleGrid>
+                  </Paper>
+                );
+              })}
             </Stack>
           </Box>
 
@@ -325,7 +324,7 @@ export const RolesPage: React.FC = () => {
               Cancelar
             </Button>
             <Button color="vetGreen" loading={saving} onClick={handleSaveRole}>
-              Guardar Rol
+              {editingRole ? 'Guardar Cambios' : 'Crear Rol'}
             </Button>
           </Group>
         </Stack>

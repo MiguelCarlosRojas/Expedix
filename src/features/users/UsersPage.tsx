@@ -29,7 +29,6 @@ export const UsersPage: React.FC = () => {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [phone, setPhone] = useState('');
-  const [jobTitle, setJobTitle] = useState('');
   const [roleId, setRoleId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
@@ -70,7 +69,6 @@ export const UsersPage: React.FC = () => {
     setFirstName('');
     setLastName('');
     setPhone('');
-    setJobTitle('');
     setRoleId(roles[0] ? String(roles[0].id) : null);
     setUserModal(true);
   };
@@ -83,7 +81,6 @@ export const UsersPage: React.FC = () => {
     setFirstName(u.first_name);
     setLastName(u.last_name);
     setPhone(u.phone);
-    setJobTitle(u.job_title);
     setRoleId(u.role ? String(u.role) : null);
     setUserModal(true);
   };
@@ -98,7 +95,6 @@ export const UsersPage: React.FC = () => {
         first_name: firstName,
         last_name: lastName,
         phone,
-        job_title: jobTitle,
         role: roleId ? parseInt(roleId, 10) : null,
       };
 
@@ -158,13 +154,12 @@ export const UsersPage: React.FC = () => {
               </Badge>
             </Group>
             <Title order={2} fw={800} c="dark.8">
-              Administración de Usuarios y Personal Veterinario
+              Administración de Usuarios
             </Title>
             <Text c="dimmed" size="sm" mt={2}>
-              Gestión de credenciales, roles clínicos asignados, auditoría de creación y control de accesos.
+              Gestión de cuentas profesionales del personal veterinario, asignación de roles y estados de acceso.
             </Text>
           </div>
-
           <Button
             color="vetGreen"
             leftSection={<IconPlus size={18} />}
@@ -172,7 +167,7 @@ export const UsersPage: React.FC = () => {
             styles={{
               root: {
                 background: 'linear-gradient(135deg, #16a34a 0%, #15803d 100%)',
-                boxShadow: '0 2px 8px rgba(22, 163, 74, 0.25)',
+                boxShadow: '0 4px 12px rgba(22, 163, 74, 0.25)',
               },
             }}
           >
@@ -183,7 +178,7 @@ export const UsersPage: React.FC = () => {
 
       {/* Users Table */}
       {loading ? (
-        <TableSkeleton rows={5} columns={7} />
+        <TableSkeleton rows={5} columns={6} />
       ) : sortedUsers.length === 0 ? (
         <EmptyState
           title="No hay usuarios registrados"
@@ -193,8 +188,8 @@ export const UsersPage: React.FC = () => {
         />
       ) : (
         <Card p={0} radius="md" withBorder bg="white" shadow="xs" style={{ overflowX: 'auto' }}>
-          <Table highlightOnHover verticalSpacing="sm" withTableBorder withColumnBorders>
-            <Table.Thead bg="gray.0">
+          <Table highlightOnHover verticalSpacing="sm" withTableBorder={false} withColumnBorders={false}>
+            <Table.Thead>
               <Table.Tr>
                 <SortableTh columnKey="full_name" sortConfig={sortConfig} onSort={requestSort}>
                   Usuario / Nombre
@@ -205,19 +200,16 @@ export const UsersPage: React.FC = () => {
                 <SortableTh columnKey="role_details" sortConfig={sortConfig} onSort={requestSort}>
                   Rol Clínico
                 </SortableTh>
-                <SortableTh columnKey="job_title" sortConfig={sortConfig} onSort={requestSort}>
-                  Cargo / Especialidad
-                </SortableTh>
                 <SortableTh columnKey="is_active" sortConfig={sortConfig} onSort={requestSort} align="center" width={110}>
                   Estado
                 </SortableTh>
-                <SortableTh columnKey="last_login" sortConfig={sortConfig} onSort={requestSort} width={150}>
+                <SortableTh columnKey="last_login" sortConfig={sortConfig} onSort={requestSort} width={160}>
                   Última Conexión
                 </SortableTh>
-                <SortableTh columnKey="created_by_name" sortConfig={sortConfig} onSort={requestSort} width={140}>
+                <SortableTh columnKey="created_by_name" sortConfig={sortConfig} onSort={requestSort} width={150}>
                   Registrado Por
                 </SortableTh>
-                <Table.Th style={{ textAlign: 'center', width: 140 }}>Acciones</Table.Th>
+                <Table.Th style={{ textAlign: 'center', width: 110 }}>Acciones</Table.Th>
               </Table.Tr>
             </Table.Thead>
             <Table.Tbody>
@@ -241,9 +233,6 @@ export const UsersPage: React.FC = () => {
                     <Badge color="vetGreen" variant="light" size="sm">
                       {u.role_details?.name || (u.is_superuser ? 'Superadministrador' : 'Sin rol')}
                     </Badge>
-                  </Table.Td>
-                  <Table.Td p="sm">
-                    <Text size="xs" c="dimmed">{u.job_title || 'Veterinario General'}</Text>
                   </Table.Td>
                   <Table.Td p="sm" style={{ textAlign: 'center' }}>
                     <Badge color={u.is_active ? 'green' : 'red'} size="xs" variant="filled">
@@ -345,24 +334,16 @@ export const UsersPage: React.FC = () => {
               onChange={(e) => setLastName(e.currentTarget.value)}
             />
           </Group>
-          <Group grow>
-            <TextInput
-              label="Teléfono de contacto"
-              placeholder="+51 987 654 321"
-              value={phone}
-              onChange={(e) => setPhone(e.currentTarget.value)}
-            />
-            <TextInput
-              label="Cargo / Especialidad médica"
-              placeholder="Médico Veterinario Cirujano"
-              value={jobTitle}
-              onChange={(e) => setJobTitle(e.currentTarget.value)}
-            />
-          </Group>
+          <TextInput
+            label="Teléfono de contacto"
+            placeholder="+51 987 654 321"
+            value={phone}
+            onChange={(e) => setPhone(e.currentTarget.value)}
+          />
           <Select
             label="Rol de Acceso Asignado"
             placeholder="Seleccione un rol"
-            data={roles.map((r) => ({ value: String(r.id), label: `${r.name} (${r.code})` }))}
+            data={roles.map((r) => ({ value: String(r.id), label: r.name }))}
             value={roleId}
             onChange={setRoleId}
             required

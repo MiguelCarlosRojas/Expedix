@@ -294,21 +294,60 @@ body {
   z-index: 100;
 }
 
+/* -------------------------------------------------------------------------- */
+/* Universal Modern Veterinary Tables                                        */
+/* -------------------------------------------------------------------------- */
+.vet-table-container {
+  background: #ffffff;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.04), 0 1px 2px -1px rgba(0, 0, 0, 0.04);
+  overflow: hidden;
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.vet-table-container:hover {
+  box-shadow: 0 4px 12px -2px rgba(22, 163, 74, 0.08), 0 2px 4px -2px rgba(0, 0, 0, 0.04);
+}
+
+.mantine-Table-thead th {
+  background-color: #f8fafc !important;
+  color: #334155 !important;
+  font-size: 11.5px !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.04em !important;
+  border-bottom: 1px solid #e2e8f0 !important;
+  padding: 12px 14px !important;
+}
+
+.mantine-Table-tbody td {
+  padding: 12px 14px !important;
+  font-size: 13.5px !important;
+  color: #1e293b;
+  border-bottom: 1px solid #f1f5f9 !important;
+  transition: background-color 0.15s ease;
+}
+
+.mantine-Table-tbody tr:hover td {
+  background-color: #f0fdf4 !important;
+}
+
 /* Sortable Table Headers */
 .sortable-th {
   cursor: pointer;
   user-select: none;
   transition: background-color 0.15s ease, color 0.15s ease;
-  padding: 10px 12px !important;
+  padding: 12px 14px !important;
 }
 
 .sortable-th:hover {
-  background-color: #f1f5f9;
-  color: #15803d;
+  background-color: #f0fdf4 !important;
+  color: #15803d !important;
 }
 
 .sortable-th-active {
   color: #15803d !important;
-  font-weight: 700 !important;
-  background-color: #f0fdf4;
+  font-weight: 800 !important;
+  background-color: #ecfdf5 !important;
 }

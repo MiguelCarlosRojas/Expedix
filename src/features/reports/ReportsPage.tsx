@@ -279,8 +279,8 @@ export const ReportsPage: React.FC = () => {
                 onAction={handleClearFilters}
               />
             ) : (
-              <Table highlightOnHover withTableBorder withColumnBorders>
-                <Table.Thead bg="gray.0">
+              <Table highlightOnHover withTableBorder={false} withColumnBorders={false}>
+                <Table.Thead>
                   <Table.Tr>
                     {reportData.headers.map((header, idx) => {
                       const sampleRow = sortedData[0] || {};

@@ -4,7 +4,7 @@ import {
 } from '@mantine/core';
 import { useForm } from '@mantine/form';
 import { notifications } from '@mantine/notifications';
-import { IconAlertCircle, IconCheck, IconDeviceFloppy, IconUserCircle } from '@tabler/icons-react';
+import { IconAlertCircle, IconCheck, IconDeviceFloppy, IconPaw } from '@tabler/icons-react';
 import { useAuth } from '../../hooks/useAuth';
 import { api } from '../../services/api';
 
@@ -25,7 +25,6 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ opened, onClose }) =
       username: '',
       email: '',
       phone: '',
-      job_title: '',
       avatar_url: '',
     },
     validate: {
@@ -42,7 +41,6 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ opened, onClose }) =
         username: user.username || '',
         email: user.email || '',
         phone: user.phone || '',
-        job_title: user.job_title || '',
         avatar_url: user.avatar_url || '',
       });
       setErrorMsg(null);
@@ -81,8 +79,8 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ opened, onClose }) =
       onClose={onClose}
       title={
         <Group gap="xs">
-          <IconUserCircle size={22} color="#0b7285" />
-          <Text fw={700} size="lg">Mi Perfil</Text>
+          <IconPaw size={22} color="#16a34a" />
+          <Text fw={700} size="lg">Mi Perfil Veterinario</Text>
         </Group>
       }
       size="lg"
@@ -98,27 +96,28 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ opened, onClose }) =
           )}
 
           {/* Header Info Banner */}
-          <Group align="center" gap="md" p="sm" bg="gray.0" style={{ borderRadius: 8 }}>
+          <Group align="center" gap="md" p="sm" bg="vetGreen.0" style={{ borderRadius: 10, border: '1px solid #dcfce7' }}>
             <Avatar
               src={form.values.avatar_url || user?.avatar_display}
               size={64}
               radius="xl"
-              color="enterpriseBlue"
+              color="vetGreen"
+              style={{ border: '2px solid #bbf7d0' }}
             >
               {user?.username?.slice(0, 2).toUpperCase()}
             </Avatar>
             <Stack gap={2}>
-              <Text fw={700} size="md">{user?.full_name}</Text>
+              <Text fw={700} size="md" c="dark.8">{user?.full_name}</Text>
               <Group gap="xs">
-                <Badge color="enterpriseBlue" size="sm" variant="filled">
-                  {user?.role_details?.name || (user?.is_superuser ? 'Superadministrador' : 'Usuario')}
+                <Badge color="vetGreen" size="sm" variant="filled">
+                  {user?.role_details?.name || (user?.is_superuser ? 'Superadministrador' : 'Personal Clínico')}
                 </Badge>
                 <Badge color={user?.is_active ? 'teal' : 'red'} size="sm" variant="light">
                   {user?.is_active ? 'Cuenta Activa' : 'Inactiva'}
                 </Badge>
               </Group>
               <Text size="xs" c="dimmed">
-                El rol y estado de la cuenta solo pueden ser modificados por un administrador.
+                El rol y estado de la cuenta son gestionados por la administración clínica.
               </Text>
             </Stack>
           </Group>
@@ -146,24 +145,17 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ opened, onClose }) =
             />
             <TextInput
               label="Correo electrónico"
-              placeholder="usuario@empresa.com"
+              placeholder="usuario@expedixvet.com"
               required
               {...form.getInputProps('email')}
             />
           </Group>
 
-          <Group grow>
-            <TextInput
-              label="Teléfono"
-              placeholder="+51 987 654 321"
-              {...form.getInputProps('phone')}
-            />
-            <TextInput
-              label="Cargo / Posición"
-              placeholder="Ej. Especialista en Operaciones"
-              {...form.getInputProps('job_title')}
-            />
-          </Group>
+          <TextInput
+            label="Teléfono de contacto"
+            placeholder="+51 987 654 321"
+            {...form.getInputProps('phone')}
+          />
 
           <TextInput
             label="URL de Fotografía / Avatar"
@@ -177,9 +169,15 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ opened, onClose }) =
             </Button>
             <Button
               type="submit"
-              color="enterpriseBlue"
+              color="vetGreen"
               leftSection={<IconDeviceFloppy size={18} />}
               loading={loading}
+              styles={{
+                root: {
+                  background: 'linear-gradient(135deg, #16a34a 0%, #15803d 100%)',
+                  boxShadow: '0 4px 12px rgba(22, 163, 74, 0.25)',
+                },
+              }}
             >
               Guardar cambios
             </Button>
