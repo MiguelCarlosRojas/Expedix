@@ -1,8 +1,7 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  SimpleGrid, Card, Text, Group, ThemeIcon, Title, Stack, Box, Skeleton, Alert, Badge,
-  TextInput, Select, Paper, Button
+  SimpleGrid, Card, Text, Group, ThemeIcon, Title, Box, Skeleton, Alert, Badge, Paper
 } from '@mantine/core';
 import {
   IconFolderPlus,
@@ -19,30 +18,25 @@ import {
   IconPaw,
   IconStethoscope,
   IconFileCertificate,
-  IconHeartbeat,
-  IconSearch,
-  IconFilterOff,
 } from '@tabler/icons-react';
 import { api } from '../../services/api';
 import { ShortcutCard } from '../../types';
-import { CardSkeleton } from '../../components/ui/SkeletonLoaders';
-import { useUrlFilters } from '../../hooks/useUrlFilters';
 import { EmptyState } from '../../components/ui/EmptyState';
 
 const iconMap: Record<string, React.ReactNode> = {
-  IconFolderPlus: <IconFolderPlus size={26} />,
-  IconFileSpark: <IconFileSpark size={26} />,
-  IconFiles: <IconFiles size={26} />,
-  IconTemplate: <IconTemplate size={26} />,
-  IconBrandGoogleDrive: <IconBrandGoogleDrive size={26} />,
-  IconReportAnalytics: <IconReportAnalytics size={26} />,
-  IconBuildingSkyscraper: <IconBuildingStore size={26} />,
-  IconBuildingStore: <IconBuildingStore size={26} />,
-  IconUsers: <IconUsers size={26} />,
-  IconShieldLock: <IconShieldLock size={26} />,
-  IconPaw: <IconPaw size={26} />,
-  IconStethoscope: <IconStethoscope size={26} />,
-  IconFileCertificate: <IconFileCertificate size={26} />,
+  IconFolderPlus: <IconFolderPlus size={24} color="#15803d" stroke={1.8} />,
+  IconFileSpark: <IconFileSpark size={24} color="#15803d" stroke={1.8} />,
+  IconFiles: <IconFiles size={24} color="#15803d" stroke={1.8} />,
+  IconTemplate: <IconTemplate size={24} color="#15803d" stroke={1.8} />,
+  IconBrandGoogleDrive: <IconBrandGoogleDrive size={24} color="#15803d" stroke={1.8} />,
+  IconReportAnalytics: <IconReportAnalytics size={24} color="#15803d" stroke={1.8} />,
+  IconBuildingSkyscraper: <IconBuildingStore size={24} color="#15803d" stroke={1.8} />,
+  IconBuildingStore: <IconBuildingStore size={24} color="#15803d" stroke={1.8} />,
+  IconUsers: <IconUsers size={24} color="#15803d" stroke={1.8} />,
+  IconShieldLock: <IconShieldLock size={24} color="#15803d" stroke={1.8} />,
+  IconPaw: <IconPaw size={24} color="#15803d" stroke={1.8} />,
+  IconStethoscope: <IconStethoscope size={24} color="#15803d" stroke={1.8} />,
+  IconFileCertificate: <IconFileCertificate size={24} color="#15803d" stroke={1.8} />,
 };
 
 export const HomePage: React.FC = () => {
@@ -50,10 +44,6 @@ export const HomePage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
-
-  const { getFilter, setFilter, clearFilters } = useUrlFilters();
-  const searchFilter = getFilter('search', '');
-  const moduleFilter = getFilter('module', '');
 
   useEffect(() => {
     const fetchShortcuts = async () => {
@@ -69,22 +59,9 @@ export const HomePage: React.FC = () => {
     fetchShortcuts();
   }, []);
 
-  const filteredShortcuts = useMemo(() => {
-    return shortcuts.filter((s) => {
-      const matchSearch =
-        !searchFilter ||
-        s.title.toLowerCase().includes(searchFilter.toLowerCase()) ||
-        s.description.toLowerCase().includes(searchFilter.toLowerCase());
-      const matchModule = !moduleFilter || s.module === moduleFilter;
-      return matchSearch && matchModule;
-    });
-  }, [shortcuts, searchFilter, moduleFilter]);
-
-  const hasActiveFilters = Boolean(searchFilter || moduleFilter);
-
   return (
     <Box className="anim-fade-in">
-      {/* Hero Banner de Bienvenida con Identidad Veterinaria */}
+      {/* Encabezado Principal de Bienvenida con Identidad Expedix Vet */}
       <Paper
         p={{ base: 'lg', md: 'xl' }}
         radius="lg"
@@ -124,7 +101,7 @@ export const HomePage: React.FC = () => {
         />
 
         <Group justify="space-between" align="center" wrap="nowrap" style={{ position: 'relative', zIndex: 1 }}>
-          <Box style={{ maxWidth: 700 }}>
+          <Box style={{ flex: 1, minWidth: 0 }}>
             <Badge
               size="sm"
               variant="light"
@@ -145,12 +122,19 @@ export const HomePage: React.FC = () => {
             <Title order={1} fw={900} style={{ fontSize: '2.1rem', lineHeight: 1.18, color: '#ffffff', marginBottom: 8 }}>
               Bienvenido a Expedix Vet
             </Title>
-            <Text size="md" style={{ color: '#d1fae5', lineHeight: 1.5, maxWidth: 620 }}>
+            <Text
+              size="md"
+              style={{
+                color: '#d1fae5',
+                lineHeight: 1.5,
+                width: '100%',
+              }}
+            >
               Todo lo que necesitas para gestionar la atención y el bienestar animal desde un solo lugar.
             </Text>
           </Box>
 
-          <Box visibleFrom="sm" style={{ opacity: 0.9 }}>
+          <Box visibleFrom="sm" style={{ opacity: 0.9, flexShrink: 0, marginLeft: 24 }}>
             <ThemeIcon
               size={76}
               radius="xl"
@@ -164,83 +148,29 @@ export const HomePage: React.FC = () => {
         </Group>
       </Paper>
 
-      {/* Sección: Tu espacio de trabajo */}
-      <Box mb="md">
-        <Title order={2} fw={800} c="dark.8">
-          Tu espacio de trabajo
-        </Title>
-        <Text c="dimmed" size="sm" mt={2}>
-          Accede rápidamente a las herramientas y módulos disponibles para gestionar tus actividades veterinarias.
-        </Text>
-      </Box>
-
-      {/* Barra de Filtros de Accesos Directos Sincronizada con URL */}
-      <Paper p="sm" radius="md" withBorder bg="white" shadow="xs" mb="lg">
-        <Group justify="space-between" wrap="wrap">
-          <Group gap="sm" style={{ flex: 1, minWidth: 260 }}>
-            <TextInput
-              placeholder="Buscar acceso rápido o función clínica..."
-              leftSection={<IconSearch size={16} color="#16a34a" />}
-              value={searchFilter}
-              onChange={(e) => setFilter('search', e.currentTarget.value)}
-              style={{ flex: 1, minWidth: 220 }}
-              size="xs"
-              radius="md"
-            />
-            <Select
-              placeholder="Todos los módulos"
-              data={[
-                { value: '', label: 'Todos los módulos' },
-                { value: 'documentos', label: 'Documentos & Historias' },
-                { value: 'drives', label: 'Google Drive & Univer' },
-                { value: 'reportes', label: 'Centro de Reportes' },
-                { value: 'administracion', label: 'Administración' },
-              ]}
-              value={moduleFilter}
-              onChange={(val) => setFilter('module', val || '')}
-              clearable
-              size="xs"
-              radius="md"
-              style={{ width: 190 }}
-            />
-            {hasActiveFilters && (
-              <Button
-                variant="subtle"
-                color="gray"
-                size="xs"
-                leftSection={<IconFilterOff size={14} />}
-                onClick={() => clearFilters()}
-              >
-                Limpiar
-              </Button>
-            )}
-          </Group>
-        </Group>
-      </Paper>
-
+      {/* Manejo de Error */}
       {error && (
         <Alert icon={<IconAlertCircle size={16} />} title="Aviso" color="red" mb="lg" radius="md">
           {error}
         </Alert>
       )}
 
+      {/* Cuadrícula Responsive de los Nueve Accesos Directos */}
       {loading ? (
         <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }} spacing="lg">
           {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((i) => (
-            <Skeleton key={i} height={140} radius="md" />
+            <Skeleton key={i} height={148} radius="md" />
           ))}
         </SimpleGrid>
-      ) : filteredShortcuts.length === 0 ? (
+      ) : shortcuts.length === 0 ? (
         <EmptyState
           title="No se encontraron accesos directos"
-          description="No existen operaciones que coincidan con los filtros seleccionados."
-          actionText="Restablecer Filtros"
-          onAction={() => clearFilters()}
+          description="No existen operaciones habilitadas para su perfil profesional."
         />
       ) : (
         <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }} spacing="lg">
-          {filteredShortcuts.map((card) => {
-            const iconNode = iconMap[card.icon] || <IconPaw size={26} />;
+          {shortcuts.map((card) => {
+            const iconNode = iconMap[card.icon] || <IconPaw size={24} color="#15803d" stroke={1.8} />;
             return (
               <Card
                 key={card.id}
@@ -249,32 +179,59 @@ export const HomePage: React.FC = () => {
                 withBorder
                 bg="white"
                 className="interactive-card"
+                onClick={() => navigate(card.path)}
+                tabIndex={0}
+                role="button"
+                aria-label={card.title}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    navigate(card.path);
+                  }
+                }}
                 style={{
                   cursor: 'pointer',
                   border: '1px solid #e2e8f0',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'space-between',
+                  height: '100%',
+                  minHeight: 154,
+                  boxSizing: 'border-box',
                 }}
-                onClick={() => navigate(card.path)}
               >
-                <Group justify="space-between" align="flex-start" mb="sm">
-                  <ThemeIcon
-                    size={50}
-                    radius="md"
-                    color={card.color === 'blue' ? 'vetGreen' : card.color || 'vetGreen'}
-                    variant="light"
-                  >
-                    {iconNode}
-                  </ThemeIcon>
-                  <ThemeIcon size={28} radius="xl" variant="subtle" color="gray">
-                    <IconArrowRight size={16} />
-                  </ThemeIcon>
-                </Group>
+                <div>
+                  <Group justify="space-between" align="center" mb="sm">
+                    <ThemeIcon
+                      size={46}
+                      radius="md"
+                      variant="light"
+                      color="vetGreen"
+                      style={{
+                        backgroundColor: '#f0fdf4',
+                        border: '1px solid #dcfce7',
+                      }}
+                    >
+                      {iconNode}
+                    </ThemeIcon>
+                    <Box
+                      className="card-arrow"
+                      style={{
+                        transition: 'transform 0.2s ease, color 0.2s ease',
+                        color: '#94a3b8',
+                      }}
+                    >
+                      <IconArrowRight size={18} />
+                    </Box>
+                  </Group>
 
-                <Text fw={700} size="md" c="dark.8" mb={4}>
-                  {card.title}
-                </Text>
-                <Text size="xs" c="dimmed" lineClamp={2} style={{ minHeight: 32 }}>
-                  {card.description}
-                </Text>
+                  <Text fw={700} size="md" c="dark.8" mb={4} style={{ lineHeight: 1.3 }}>
+                    {card.title}
+                  </Text>
+                  <Text size="sm" c="dimmed" style={{ lineHeight: 1.5, color: '#64748b' }}>
+                    {card.description}
+                  </Text>
+                </div>
               </Card>
             );
           })}
