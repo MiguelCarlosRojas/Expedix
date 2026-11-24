@@ -46,6 +46,13 @@ class LoginView(views.APIView):
             )
 
         login(request, user)
+        # Gestionar persistencia de sesión segura según "Recordar sesión en este equipo"
+        remember = request.data.get('remember', True)
+        if remember:
+            request.session.set_expiry(1209600)  # 14 días (2 semanas)
+        else:
+            request.session.set_expiry(0)  # Expira inmediatamente al cerrar el navegador
+
         # Ensure CSRF cookie is set
         csrf_token = get_token(request)
 
