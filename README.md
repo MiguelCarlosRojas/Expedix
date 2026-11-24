@@ -228,8 +228,8 @@ Este error se producía cuando el pipeline se ejecutaba antes de registrar los s
 - **Causa:** Ausencia de variables en el almacén de secretos del repositorio.
 - **Solución implementada:** Se registraron los secretos `DOCKERHUB_USERNAME` (`miguelangelcr`) y `DOCKERHUB_TOKEN` en `Settings -> Secrets and variables -> Actions`.
 - **Ejecuciones exitosas verificadas:**
-  - API Workflow (Run `45412217688` - Commit `dfb9a3c`): Construcción y publicación exitosa de `miguelangelcr/expedix-ia:api-latest` y `api-sha-dfb9a3c`.
-  - Web Workflow (Run `45412466020` - Commit `4916e62`): Validación TypeScript, build Vite y publicación exitosa de `miguelangelcr/expedix-ia:web-latest` y `web-sha-4916e62`.
+  - API Workflow (Run `45425555418` - Commit `ec3170b`): Construcción y publicación exitosa de `miguelangelcr/expedix-ia:api-latest` y `api-sha-ec3170b`.
+  - Web Workflow (Run `45425579860` - Commit `3d11e60`): Validación TypeScript, build Vite y publicación exitosa de `miguelangelcr/expedix-ia:web-latest` y `web-sha-3d11e60`.
 
 ### Advertencia: `[DEP0040] DeprecationWarning: The punycode module is deprecated`
 - **Origen:** Proviene del runtime interno de Node.js 24 ejecutado por el runner de GitHub Actions al cargar paquetes de acciones empacadas con versiones anteriores de utilitarios de red (`punycode`).
