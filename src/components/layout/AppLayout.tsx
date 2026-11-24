@@ -54,7 +54,7 @@ export const AppLayout: React.FC = () => {
     breadcrumbs: [{ label: 'Sistema' }, { label: 'Detalle' }],
   };
 
-  const sidebarWidth = collapsed ? 76 : 260;
+  const sidebarWidth = collapsed ? 76 : 276;
 
   return (
     <Box style={{ display: 'flex', minHeight: '100vh', backgroundColor: '#f8fafc' }}>

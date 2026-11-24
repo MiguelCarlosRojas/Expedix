@@ -201,13 +201,13 @@ export const RolesPage: React.FC = () => {
                     </Badge>
                   </Table.Td>
                   <Table.Td p="sm" style={{ textAlign: 'center' }}>
-                    <Menu shadow="md" width={220} position="bottom-end" withinPortal>
+                    <Menu shadow="md" width={220} position="bottom-end" withinPortal transitionProps={{ transition: 'pop', duration: 150 }}>
                       <Menu.Target>
-                        <ActionIcon variant="subtle" color="gray" size="sm" radius="md" title="Opciones del rol">
+                        <ActionIcon className="vet-action-btn" size="md" radius="md" aria-label="Opciones del rol" title="Opciones del rol">
                           <IconDotsVertical size={16} />
                         </ActionIcon>
                       </Menu.Target>
-                      <Menu.Dropdown>
+                      <Menu.Dropdown className="vet-menu-dropdown">
                         <Menu.Label>Rol: {role.name}</Menu.Label>
                         <Menu.Item
                           leftSection={<IconEdit size={15} color="#2563eb" />}

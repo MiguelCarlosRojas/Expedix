@@ -76,7 +76,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggleCollapse })
   return (
     <Box
       style={{
-        width: collapsed ? 76 : 268,
+        width: collapsed ? 76 : 276,
         height: '100vh',
         position: 'fixed',
         left: 0,
@@ -149,7 +149,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggleCollapse })
         <Stack gap={3} style={{ width: '100%', overflow: 'hidden' }}>
           {/* 1. Inicio */}
           {hasModuleAccess('inicio') && (
-            <Tooltip label="Inicio" position="right" disabled={!collapsed} withArrow>
+            <Tooltip label="Inicio" position="right" disabled={!collapsed} withArrow withinPortal>
               <NavLink
                 to="/app/inicio"
                 className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
@@ -163,7 +163,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggleCollapse })
 
           {/* 2. Dashboard */}
           {hasModuleAccess('dashboard') && (
-            <Tooltip label="Dashboard" position="right" disabled={!collapsed} withArrow>
+            <Tooltip label="Dashboard" position="right" disabled={!collapsed} withArrow withinPortal>
               <NavLink
                 to="/app/dashboard"
                 className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
@@ -178,7 +178,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggleCollapse })
           {/* 3. Documentos (Expandible) */}
           {hasModuleAccess('documentos') && (
             <Box>
-              <Tooltip label="Documentos" position="right" disabled={!collapsed} withArrow>
+              <Tooltip label="Documentos" position="right" disabled={!collapsed} withArrow withinPortal>
                 <UnstyledButton
                   onClick={() => {
                     if (collapsed && onToggleCollapse) onToggleCollapse();
@@ -207,13 +207,14 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggleCollapse })
                       <NavLink
                         key={sub.path}
                         to={sub.path}
+                        title={sub.label}
                         className={({ isActive }) => `sidebar-sublink ${isActive ? 'active' : ''}`}
                       >
-                        <Group gap="xs" wrap="nowrap" style={{ overflow: 'hidden', maxWidth: '100%' }}>
+                        <Group gap="xs" wrap="nowrap" style={{ maxWidth: '100%' }}>
                           <Box style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>
                             {sub.icon}
                           </Box>
-                          <Text size="xs" truncate style={{ flex: 1 }}>{sub.label}</Text>
+                          <Text size="xs" style={{ flex: 1, whiteSpace: 'nowrap' }}>{sub.label}</Text>
                         </Group>
                       </NavLink>
                     ))}
@@ -225,7 +226,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggleCollapse })
 
           {/* 4. Drives */}
           {hasModuleAccess('drives') && (
-            <Tooltip label="Drives" position="right" disabled={!collapsed} withArrow>
+            <Tooltip label="Drives" position="right" disabled={!collapsed} withArrow withinPortal>
               <NavLink
                 to="/app/drives"
                 className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
@@ -240,7 +241,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggleCollapse })
           {/* 5. Reportes (Expandible con los 5 Reportes!) */}
           {hasModuleAccess('reportes') && (
             <Box>
-              <Tooltip label="Reportes" position="right" disabled={!collapsed} withArrow>
+              <Tooltip label="Reportes" position="right" disabled={!collapsed} withArrow withinPortal>
                 <UnstyledButton
                   onClick={() => {
                     if (collapsed && onToggleCollapse) onToggleCollapse();
@@ -269,13 +270,14 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggleCollapse })
                       <NavLink
                         key={sub.path}
                         to={sub.path}
+                        title={sub.label}
                         className={({ isActive }) => `sidebar-sublink ${isActive ? 'active' : ''}`}
                       >
-                        <Group gap="xs" wrap="nowrap" style={{ overflow: 'hidden', maxWidth: '100%' }}>
+                        <Group gap="xs" wrap="nowrap" style={{ maxWidth: '100%' }}>
                           <Box style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>
                             {sub.icon}
                           </Box>
-                          <Text size="xs" truncate style={{ flex: 1 }}>{sub.label}</Text>
+                          <Text size="xs" style={{ flex: 1, whiteSpace: 'nowrap' }}>{sub.label}</Text>
                         </Group>
                       </NavLink>
                     ))}
@@ -288,7 +290,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggleCollapse })
           {/* 6. Administración (Expandible con las 3 opciones exactas!) */}
           {(hasModuleAccess('administracion') || hasModuleAccess('roles') || hasModuleAccess('usuarios')) && (
             <Box>
-              <Tooltip label="Administración" position="right" disabled={!collapsed} withArrow>
+              <Tooltip label="Administración" position="right" disabled={!collapsed} withArrow withinPortal>
                 <UnstyledButton
                   onClick={() => {
                     if (collapsed && onToggleCollapse) onToggleCollapse();
@@ -317,13 +319,14 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggleCollapse })
                       <NavLink
                         key={sub.path}
                         to={sub.path}
+                        title={sub.label}
                         className={({ isActive }) => `sidebar-sublink ${isActive ? 'active' : ''}`}
                       >
-                        <Group gap="xs" wrap="nowrap" style={{ overflow: 'hidden', maxWidth: '100%' }}>
+                        <Group gap="xs" wrap="nowrap" style={{ maxWidth: '100%' }}>
                           <Box style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>
                             {sub.icon}
                           </Box>
-                          <Text size="xs" truncate style={{ flex: 1 }}>{sub.label}</Text>
+                          <Text size="xs" style={{ flex: 1, whiteSpace: 'nowrap' }}>{sub.label}</Text>
                         </Group>
                       </NavLink>
                     ))}

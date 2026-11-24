@@ -50,6 +50,7 @@ export const Header: React.FC<HeaderProps> = ({ collapsed, onToggleCollapse }) =
               label={collapsed ? 'Expandir barra lateral' : 'Contraer barra lateral'}
               withArrow
               position="bottom"
+              withinPortal
             >
               <ActionIcon
                 variant="light"
@@ -76,7 +77,7 @@ export const Header: React.FC<HeaderProps> = ({ collapsed, onToggleCollapse }) =
         {/* Right: Notifications Bell and User Profile Menu */}
         <Group gap="sm">
           {/* Notifications Popover */}
-          <Popover width={360} position="bottom-end" shadow="md" radius="md" withArrow>
+          <Popover width={360} position="bottom-end" shadow="md" radius="md" withArrow withinPortal>
             <Popover.Target>
               <Indicator
                 inline
@@ -183,7 +184,7 @@ export const Header: React.FC<HeaderProps> = ({ collapsed, onToggleCollapse }) =
           </Popover>
 
           {/* User Profile Menu */}
-          <Menu shadow="md" width={240} position="bottom-end" radius="md">
+          <Menu shadow="md" width={240} position="bottom-end" radius="md" withinPortal>
             <Menu.Target>
               <UnstyledButton
                 p="xs"

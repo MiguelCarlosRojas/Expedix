@@ -189,7 +189,7 @@ export const DrivesPage: React.FC = () => {
       <Paper p="md" mb="md" withBorder radius="md" bg="white">
         <Group justify="space-between">
           {/* Action "NUEVO" Button with Dropdown Menu */}
-          <Menu shadow="md" width={220} position="bottom-start">
+          <Menu shadow="md" width={220} position="bottom-start" withinPortal transitionProps={{ transition: 'pop', duration: 150 }}>
             <Menu.Target>
               <Button
                 color="enterpriseBlue"
@@ -346,18 +346,19 @@ export const DrivesPage: React.FC = () => {
                         </Box>
                       </Group>
 
-                      <Menu shadow="md" position="bottom-end">
+                      <Menu shadow="md" position="bottom-end" withinPortal transitionProps={{ transition: 'pop', duration: 150 }}>
                         <Menu.Target>
                           <ActionIcon
-                            variant="subtle"
-                            color="gray"
-                            size="sm"
+                            className="vet-action-btn"
+                            size="md"
+                            radius="md"
+                            aria-label="Opciones de carpeta"
                             onClick={(e) => e.stopPropagation()}
                           >
                             <IconDotsVertical size={16} />
                           </ActionIcon>
                         </Menu.Target>
-                        <Menu.Dropdown>
+                        <Menu.Dropdown className="vet-menu-dropdown">
                           <Menu.Item
                             leftSection={<IconEdit size={14} />}
                             onClick={(e) => {
@@ -435,18 +436,19 @@ export const DrivesPage: React.FC = () => {
                           )}
                         </ThemeIcon>
 
-                        <Menu shadow="md" position="bottom-end">
+                        <Menu shadow="md" position="bottom-end" withinPortal transitionProps={{ transition: 'pop', duration: 150 }}>
                           <Menu.Target>
                             <ActionIcon
-                              variant="subtle"
-                              color="gray"
-                              size="sm"
+                              className="vet-action-btn"
+                              size="md"
+                              radius="md"
+                              aria-label="Opciones de archivo"
                               onClick={(e) => e.stopPropagation()}
                             >
                               <IconDotsVertical size={16} />
                             </ActionIcon>
                           </Menu.Target>
-                          <Menu.Dropdown>
+                          <Menu.Dropdown className="vet-menu-dropdown">
                             <Menu.Item
                               leftSection={<IconEdit size={14} />}
                               onClick={(e) => {

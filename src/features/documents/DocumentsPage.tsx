@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import {
   Box, Table, Text, Group, Button, TextInput, Select, Badge,
   ActionIcon, Modal, Stepper, Stack, Paper, Title, Divider,
-  ThemeIcon, Menu
+  ThemeIcon, Menu, Tooltip
 } from '@mantine/core';
 import {
   IconPlus, IconSearch, IconFilter, IconFileSpark, IconDownload,
@@ -144,7 +144,7 @@ export const DocumentsPage: React.FC = () => {
       const params = new URLSearchParams();
       if (search) params.append('search', search);
       if (statusFilter) params.append('estado', statusFilter);
-      if (templateFilter) params.append('template', templateFilter);
+      if (activeCategory === 'todos' && templateFilter) params.append('template', templateFilter);
 
       const res = await api.get<{ results: Expediente[] } | Expediente[]>(`/documents/?${params.toString()}`);
       const items = Array.isArray(res.data) ? res.data : (res.data.results || []);
@@ -279,8 +279,11 @@ export const DocumentsPage: React.FC = () => {
     }
   };
 
+  const showTemplateFilter = activeCategory === 'todos';
+  const showCreateButton = activeCategory === 'todos';
+
   const currentHeader = CATEGORY_HEADERS[activeCategory] || CATEGORY_HEADERS.todos;
-  const hasActiveFilters = Boolean(search || statusFilter || templateFilter);
+  const hasActiveFilters = Boolean(search || statusFilter || (showTemplateFilter && templateFilter));
   const hasActiveTemplateFilters = Boolean(templateSearch || templateTypeFilter || templateStatusFilter);
 
   return (
@@ -421,68 +424,64 @@ export const DocumentsPage: React.FC = () => {
                   radius="md"
                 />
 
-                <Select
-                  placeholder="Plantilla clínica"
-                  leftSection={<IconTemplate size={16} color="#15803d" />}
-                  data={[
-                    { value: '', label: 'Todas las plantillas' },
-                    ...templates.map((t) => ({ value: String(t.id), label: t.nombre })),
-                  ]}
-                  value={templateFilter}
-                  onChange={(val) => setFilter('template', val || '')}
-                  clearable
-                  style={{ width: 220 }}
-                  size="sm"
-                  radius="md"
-                />
+                {showTemplateFilter && (
+                  <Select
+                    placeholder="Plantilla clínica"
+                    leftSection={<IconTemplate size={16} color="#15803d" />}
+                    data={[
+                      { value: '', label: 'Todas las plantillas' },
+                      ...templates.map((t) => ({ value: String(t.id), label: t.nombre })),
+                    ]}
+                    value={templateFilter}
+                    onChange={(val) => setFilter('template', val || '')}
+                    clearable
+                    style={{ width: 220 }}
+                    size="sm"
+                    radius="md"
+                  />
+                )}
 
-                <ActionIcon
-                  variant="light"
-                  color="vetGreen"
-                  size="lg"
-                  radius="md"
-                  onClick={fetchExpedientes}
-                  title="Refrescar datos"
-                  aria-label="Refrescar expedientes"
-                >
-                  <IconRefresh size={18} color="#15803d" />
-                </ActionIcon>
+                <Tooltip label="Refrescar datos" withArrow position="top" withinPortal>
+                  <ActionIcon
+                    variant="light"
+                    color="vetGreen"
+                    size="lg"
+                    radius="md"
+                    onClick={fetchExpedientes}
+                    aria-label="Refrescar expedientes"
+                    style={{
+                      border: '1px solid #bbf7d0',
+                      transition: 'all 0.18s ease',
+                    }}
+                  >
+                    <IconRefresh size={18} color="#15803d" />
+                  </ActionIcon>
+                </Tooltip>
 
                 {hasActiveFilters && (
-                  <Button
-                    variant="subtle"
-                    color="gray"
-                    size="xs"
-                    radius="md"
-                    leftSection={<IconFilterOff size={14} />}
-                    onClick={() => clearFilters(['categoria'])}
-                  >
-                    Limpiar
-                  </Button>
+                  <Tooltip label="Limpiar filtros" withArrow position="top" withinPortal>
+                    <ActionIcon
+                      variant="light"
+                      color="vetGreen"
+                      size="lg"
+                      radius="md"
+                      onClick={() => clearFilters(['categoria'])}
+                      aria-label="Limpiar filtros"
+                      style={{
+                        backgroundColor: '#f0fdf4',
+                        border: '1px solid #bbf7d0',
+                        color: '#15803d',
+                        transition: 'all 0.18s ease',
+                      }}
+                    >
+                      <IconFilterOff size={18} />
+                    </ActionIcon>
+                  </Tooltip>
                 )}
               </Group>
 
-              {/* Contador Resumido de Resultados y Botón Principal */}
-              <Group gap="sm" wrap="wrap">
-                <Box
-                  px="sm"
-                  py={6}
-                  style={{
-                    backgroundColor: '#f0fdf4',
-                    border: '1px solid #bbf7d0',
-                    borderRadius: 10,
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: 8,
-                  }}
-                >
-                  <IconFiles size={16} color="#15803d" />
-                  <Text size="xs" fw={700} c="vetGreen.9">
-                    <span style={{ fontSize: '14px', fontWeight: 800 }}>{sortedExpedientes.length}</span>{' '}
-                    {sortedExpedientes.length === 1 ? 'expediente encontrado' : 'expedientes encontrados'}
-                  </Text>
-                </Box>
-
+              {/* Botón Principal Condicional (Únicamente en Todos) */}
+              {showCreateButton && (
                 <Button
                   color="vetGreen"
                   size="sm"
@@ -499,7 +498,7 @@ export const DocumentsPage: React.FC = () => {
                 >
                   Nuevo Expediente Veterinario
                 </Button>
-              </Group>
+              )}
             </Group>
           </Paper>
 
@@ -520,8 +519,8 @@ export const DocumentsPage: React.FC = () => {
                     description="No hay expedientes que coincidan con los criterios de búsqueda o filtros aplicados."
                     secondaryActionText="Limpiar filtros"
                     onSecondaryAction={() => clearFilters(['categoria'])}
-                    actionText="Nuevo Expediente Veterinario"
-                    onAction={handleOpenWizard}
+                    actionText={showCreateButton ? "Nuevo Expediente Veterinario" : undefined}
+                    onAction={showCreateButton ? handleOpenWizard : undefined}
                   />
                 ) : (
                   <EmptyState
@@ -529,8 +528,8 @@ export const DocumentsPage: React.FC = () => {
                     icon={<IconPaw size={38} color="#15803d" />}
                     title="Sin expedientes registrados"
                     description="Aún no se han generado documentos clínicos en esta categoría de atención."
-                    actionText="Nuevo Expediente Veterinario"
-                    onAction={handleOpenWizard}
+                    actionText={showCreateButton ? "Nuevo Expediente Veterinario" : undefined}
+                    onAction={showCreateButton ? handleOpenWizard : undefined}
                   />
                 )
               ) : (
@@ -594,13 +593,13 @@ export const DocumentsPage: React.FC = () => {
                             </Text>
                           </Table.Td>
                           <Table.Td p="sm" style={{ textAlign: 'center' }}>
-                            <Menu shadow="md" width={220} position="bottom-end" withinPortal>
+                            <Menu shadow="md" width={220} position="bottom-end" withinPortal transitionProps={{ transition: 'pop', duration: 150 }}>
                               <Menu.Target>
-                                <ActionIcon variant="subtle" color="gray" size="sm" radius="md" title="Opciones del expediente">
+                                <ActionIcon className="vet-action-btn" size="md" radius="md" aria-label="Opciones del expediente" title="Opciones del expediente">
                                   <IconDotsVertical size={16} />
                                 </ActionIcon>
                               </Menu.Target>
-                              <Menu.Dropdown>
+                              <Menu.Dropdown className="vet-menu-dropdown">
                                 <Menu.Label>Expediente: {exp.numero_expediente}</Menu.Label>
                                 {exp.pdf_url && (
                                   <Menu.Item
@@ -724,79 +723,71 @@ export const DocumentsPage: React.FC = () => {
                   radius="md"
                 />
 
-                <ActionIcon
-                  variant="light"
-                  color="vetGreen"
-                  size="lg"
-                  radius="md"
-                  onClick={fetchTemplates}
-                  title="Refrescar plantillas"
-                  aria-label="Refrescar plantillas"
-                >
-                  <IconRefresh size={18} color="#15803d" />
-                </ActionIcon>
-
-                {hasActiveTemplateFilters && (
-                  <Button
-                    variant="subtle"
-                    color="gray"
-                    size="xs"
+                <Tooltip label="Refrescar plantillas" withArrow position="top" withinPortal>
+                  <ActionIcon
+                    variant="light"
+                    color="vetGreen"
+                    size="lg"
                     radius="md"
-                    leftSection={<IconFilterOff size={14} />}
-                    onClick={() => {
-                      setTemplateSearch('');
-                      setTemplateTypeFilter('');
-                      setTemplateStatusFilter('');
+                    onClick={fetchTemplates}
+                    aria-label="Refrescar plantillas"
+                    style={{
+                      border: '1px solid #bbf7d0',
+                      transition: 'all 0.18s ease',
                     }}
                   >
-                    Limpiar
-                  </Button>
+                    <IconRefresh size={18} color="#15803d" />
+                  </ActionIcon>
+                </Tooltip>
+
+                {hasActiveTemplateFilters && (
+                  <Tooltip label="Limpiar filtros" withArrow position="top" withinPortal>
+                    <ActionIcon
+                      variant="light"
+                      color="vetGreen"
+                      size="lg"
+                      radius="md"
+                      onClick={() => {
+                        setTemplateSearch('');
+                        setTemplateTypeFilter('');
+                        setTemplateStatusFilter('');
+                      }}
+                      aria-label="Limpiar filtros"
+                      style={{
+                        backgroundColor: '#f0fdf4',
+                        border: '1px solid #bbf7d0',
+                        color: '#15803d',
+                        transition: 'all 0.18s ease',
+                      }}
+                    >
+                      <IconFilterOff size={18} />
+                    </ActionIcon>
+                  </Tooltip>
                 )}
               </Group>
 
-              {/* Contador de Plantillas y Botón */}
-              <Group gap="sm" wrap="wrap">
-                <Box
-                  px="sm"
-                  py={6}
-                  style={{
-                    backgroundColor: '#f0fdf4',
-                    border: '1px solid #bbf7d0',
-                    borderRadius: 10,
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: 8,
-                  }}
-                >
-                  <IconTemplate size={16} color="#15803d" />
-                  <Text size="xs" fw={700} c="vetGreen.9">
-                    <span style={{ fontSize: '14px', fontWeight: 800 }}>{sortedFilteredTemplates.length}</span>{' '}
-                    {sortedFilteredTemplates.length === 1 ? 'plantilla configurada' : 'plantillas configuradas'}
-                  </Text>
-                </Box>
-
-                <Button
-                  color="vetGreen"
-                  size="sm"
-                  radius="md"
-                  leftSection={<IconPlus size={18} stroke={2} />}
-                  onClick={() => {
-                    if (templates.length > 0) {
-                      setTemplateForBuilder(templates[0]);
-                      setBuilderOpened(true);
-                    }
-                  }}
-                  styles={{
-                    root: {
-                      background: 'linear-gradient(135deg, #16a34a 0%, #15803d 100%)',
-                      boxShadow: '0 4px 12px rgba(22, 163, 74, 0.25)',
-                      fontWeight: 600,
-                    },
-                  }}
-                >
-                  Constructor de Campos
-                </Button>
-              </Group>
+              {/* Botón Constructor de Campos (Sin contador redundante) */}
+              <Button
+                color="vetGreen"
+                size="sm"
+                radius="md"
+                leftSection={<IconPlus size={18} stroke={2} />}
+                onClick={() => {
+                  if (templates.length > 0) {
+                    setTemplateForBuilder(templates[0]);
+                    setBuilderOpened(true);
+                  }
+                }}
+                styles={{
+                  root: {
+                    background: 'linear-gradient(135deg, #16a34a 0%, #15803d 100%)',
+                    boxShadow: '0 4px 12px rgba(22, 163, 74, 0.25)',
+                    fontWeight: 600,
+                  },
+                }}
+              >
+                Constructor de Campos
+              </Button>
             </Group>
           </Paper>
 
@@ -877,13 +868,13 @@ export const DocumentsPage: React.FC = () => {
                         </Badge>
                       </Table.Td>
                       <Table.Td p="sm" style={{ textAlign: 'center' }}>
-                        <Menu shadow="md" width={220} position="bottom-end" withinPortal>
+                        <Menu shadow="md" width={220} position="bottom-end" withinPortal transitionProps={{ transition: 'pop', duration: 150 }}>
                           <Menu.Target>
-                            <ActionIcon variant="subtle" color="gray" size="sm" radius="md" title="Opciones de plantilla">
+                            <ActionIcon className="vet-action-btn" size="md" radius="md" aria-label="Opciones de plantilla" title="Opciones de plantilla">
                               <IconDotsVertical size={16} />
                             </ActionIcon>
                           </Menu.Target>
-                          <Menu.Dropdown>
+                          <Menu.Dropdown className="vet-menu-dropdown">
                             <Menu.Label>Plantilla: {t.nombre}</Menu.Label>
                             <Menu.Item
                               leftSection={<IconTool size={15} color="#16a34a" />}

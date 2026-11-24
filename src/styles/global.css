@@ -195,7 +195,6 @@ body {
   position: relative;
   box-sizing: border-box;
   max-width: 100%;
-  overflow: hidden;
   white-space: nowrap;
 }
 
@@ -219,7 +218,7 @@ body {
 .sidebar-sublink {
   display: flex;
   align-items: center;
-  padding: 8px 12px 8px 36px;
+  padding: 8px 10px 8px 24px;
   border-radius: 8px;
   color: #64748b;
   text-decoration: none;
@@ -229,7 +228,6 @@ body {
   margin-bottom: 2px;
   box-sizing: border-box;
   max-width: 100%;
-  overflow: hidden;
   white-space: nowrap;
 }
 
@@ -245,31 +243,188 @@ body {
 }
 
 /* -------------------------------------------------------------------------- */
-/* Distinct Veterinary Select Inputs (Differentiated from Text Inputs)        */
+/* Distinct Veterinary Select Inputs & Dropdown Panel Animations               */
 /* -------------------------------------------------------------------------- */
 .mantine-Select-input {
-  background-color: #f8fafc !important;
+  background-color: #ffffff !important;
   border: 1px solid #cbd5e1 !important;
+  border-radius: 10px !important;
   font-weight: 500 !important;
+  color: #1e293b !important;
   cursor: pointer !important;
-  transition: all 0.18s ease-in-out !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04) !important;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease !important;
 }
 
 .mantine-Select-input:hover {
-  background-color: #f1f5f9 !important;
+  background-color: #f8fafc !important;
   border-color: #16a34a !important;
+  box-shadow: 0 2px 5px rgba(22, 163, 74, 0.08) !important;
 }
 
 .mantine-Select-input:focus,
-.mantine-Select-input:focus-within {
+.mantine-Select-input:focus-within,
+.mantine-Select-input[data-expanded="true"] {
   background-color: #ffffff !important;
   border-color: #16a34a !important;
   box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.15) !important;
+  outline: none !important;
 }
 
-.mantine-Select-section {
-  color: #16a34a !important;
+.mantine-Select-section[data-position="right"] {
+  color: #64748b !important;
   pointer-events: none;
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), color 0.18s ease;
+}
+
+.mantine-Select-root:hover .mantine-Select-section[data-position="right"] {
+  color: #15803d !important;
+}
+
+/* Arrow rotation when selector is open or focused */
+.mantine-Select-root:focus-within .mantine-Select-section[data-position="right"] svg,
+.mantine-Select-input[data-expanded="true"] ~ .mantine-Select-section svg {
+  transform: rotate(180deg);
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Select Combobox Dropdown Panel */
+.mantine-Combobox-dropdown,
+.mantine-Select-dropdown {
+  background-color: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 12px !important;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.04) !important;
+  padding: 6px !important;
+  overflow: hidden !important;
+  animation: comboboxFadeDown 0.18s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes comboboxFadeDown {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Option Items */
+.mantine-Combobox-option,
+.mantine-Select-option {
+  border-radius: 8px !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  color: #334155 !important;
+  padding: 8px 12px !important;
+  cursor: pointer !important;
+  transition: background-color 0.15s ease, color 0.15s ease, transform 0.12s ease !important;
+}
+
+.mantine-Combobox-option:hover,
+.mantine-Select-option:hover {
+  background-color: #f0fdf4 !important;
+  color: #15803d !important;
+  transform: translateX(2px);
+}
+
+/* Selected option */
+.mantine-Combobox-option[data-checked="true"],
+.mantine-Select-option[data-checked="true"] {
+  background-color: #dcfce7 !important;
+  color: #166534 !important;
+  font-weight: 700 !important;
+}
+
+.mantine-Combobox-option[data-checked="true"]:hover,
+.mantine-Select-option[data-checked="true"]:hover {
+  background-color: #bbf7d0 !important;
+  color: #14532d !important;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Modern Veterinary Action Trigger Button (Three Dots) & Menu Styling        */
+/* -------------------------------------------------------------------------- */
+.vet-action-btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 32px !important;
+  height: 32px !important;
+  border-radius: 8px !important;
+  border: 1px solid transparent !important;
+  background-color: transparent !important;
+  color: #15803d !important;
+  cursor: pointer !important;
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+.vet-action-btn:hover {
+  background-color: #f0fdf4 !important;
+  border-color: #bbf7d0 !important;
+  color: #166534 !important;
+  box-shadow: 0 2px 6px rgba(22, 163, 74, 0.15) !important;
+  transform: translateY(-1px) !important;
+}
+
+.vet-action-btn:active {
+  transform: scale(0.95) !important;
+}
+
+.vet-action-btn:focus-visible {
+  outline: 2px solid #16a34a !important;
+  outline-offset: 2px !important;
+}
+
+/* Modern Veterinary Dropdown Menu Styling */
+.vet-menu-dropdown {
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 12px !important;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.04) !important;
+  padding: 6px !important;
+  animation: menuAppear 0.18s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes menuAppear {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.vet-menu-dropdown .mantine-Menu-item {
+  border-radius: 8px !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  color: #334155 !important;
+  padding: 8px 12px !important;
+  transition: all 0.15s ease !important;
+}
+
+.vet-menu-dropdown .mantine-Menu-item:hover {
+  background-color: #f0fdf4 !important;
+  color: #15803d !important;
+}
+
+.vet-menu-dropdown .mantine-Menu-item[data-color="red"]:hover {
+  background-color: #fef2f2 !important;
+  color: #dc2626 !important;
+}
+
+.vet-menu-dropdown .mantine-Menu-label {
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.04em !important;
+  color: #64748b !important;
+  padding: 6px 12px 4px 12px !important;
 }
 
 /* -------------------------------------------------------------------------- */

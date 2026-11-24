@@ -88,14 +88,42 @@ export const theme = createTheme({
         radius: 'md',
         size: 'sm',
         checkIconPosition: 'right',
+        comboboxProps: {
+          withinPortal: true,
+          shadow: 'md',
+          transitionProps: { transition: 'fade-down', duration: 180 },
+        },
       },
       styles: {
         input: {
-          backgroundColor: '#f8fafc',
+          backgroundColor: '#ffffff',
           borderColor: '#cbd5e1',
           cursor: 'pointer',
           fontWeight: 500,
         },
+      },
+    },
+    Menu: {
+      defaultProps: {
+        withinPortal: true,
+        shadow: 'md',
+        radius: 'md',
+        transitionProps: { transition: 'pop', duration: 150 },
+      },
+    },
+    Popover: {
+      defaultProps: {
+        withinPortal: true,
+        shadow: 'md',
+        radius: 'md',
+        transitionProps: { transition: 'fade-down', duration: 150 },
+      },
+    },
+    Tooltip: {
+      defaultProps: {
+        withinPortal: true,
+        withArrow: true,
+        transitionProps: { transition: 'fade', duration: 150 },
       },
     },
     Card: {
