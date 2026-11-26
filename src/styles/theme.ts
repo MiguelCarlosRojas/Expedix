@@ -87,8 +87,34 @@ export const theme = createTheme({
       defaultProps: {
         radius: 'md',
         size: 'sm',
-        checkIconPosition: 'right',
+        searchable: false,
+        clearable: false,
+        withCheckIcon: false,
+        allowDeselect: false,
         comboboxProps: {
+          withinPortal: true,
+          shadow: 'md',
+          transitionProps: { transition: 'fade-down', duration: 180 },
+        },
+      },
+      styles: {
+        input: {
+          backgroundColor: '#ffffff',
+          borderColor: '#cbd5e1',
+          cursor: 'pointer',
+          fontWeight: 500,
+          userSelect: 'none',
+          caretColor: 'transparent',
+        },
+      },
+    },
+    DateInput: {
+      defaultProps: {
+        radius: 'md',
+        size: 'sm',
+        valueFormat: 'YYYY-MM-DD',
+        clearable: false,
+        popoverProps: {
           withinPortal: true,
           shadow: 'md',
           transitionProps: { transition: 'fade-down', duration: 180 },

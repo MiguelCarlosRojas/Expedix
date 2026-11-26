@@ -4,6 +4,7 @@ import {
   Switch, FileInput, SimpleGrid, Stack, Title, Paper, Group, Text, Box
 } from '@mantine/core';
 import { DateInput } from '@mantine/dates';
+import { IconCalendar } from '@tabler/icons-react';
 import { DynamicField } from '../../types';
 
 interface DynamicFormProps {
@@ -85,8 +86,11 @@ export const DynamicForm: React.FC<DynamicFormProps> = ({
           <DateInput
             {...commonProps}
             valueFormat="YYYY-MM-DD"
-            value={val ? new Date(val) : null}
+            value={val ? new Date(val + (val.includes('T') ? '' : 'T12:00:00')) : null}
             onChange={(date) => onChange(field.identifier, date ? date.toISOString().split('T')[0] : '')}
+            leftSection={<IconCalendar size={16} color="#16a34a" />}
+            clearable={false}
+            radius="md"
           />
         );
 
@@ -97,7 +101,10 @@ export const DynamicForm: React.FC<DynamicFormProps> = ({
             data={field.options || []}
             value={val}
             onChange={(v) => onChange(field.identifier, v)}
-            clearable
+            searchable={false}
+            clearable={false}
+            withCheckIcon={false}
+            radius="md"
           />
         );
 
@@ -108,7 +115,8 @@ export const DynamicForm: React.FC<DynamicFormProps> = ({
             data={field.options || []}
             value={Array.isArray(val) ? val : []}
             onChange={(v) => onChange(field.identifier, v)}
-            clearable
+            clearable={false}
+            radius="md"
           />
         );
 

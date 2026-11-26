@@ -3,14 +3,15 @@ import { useParams, useNavigate } from 'react-router-dom';
 import {
   Box, Table, Text, Group, Button, TextInput, Select, Badge,
   ActionIcon, Modal, Stepper, Stack, Paper, Title, Divider,
-  ThemeIcon, Menu, Tooltip
+  ThemeIcon, Menu, Tooltip, ScrollArea, SimpleGrid
 } from '@mantine/core';
 import {
   IconPlus, IconSearch, IconFilter, IconFileSpark, IconDownload,
   IconEye, IconTrash, IconTemplate, IconRefresh, IconCheck, IconAlertTriangle,
   IconExternalLink, IconCopy, IconTool, IconFiles,
   IconPaw, IconStethoscope, IconFileCertificate, IconFilterOff,
-  IconDotsVertical, IconToggleLeft, IconToggleRight, IconFolderPlus, IconX
+  IconDotsVertical, IconToggleLeft, IconToggleRight, IconFolderPlus, IconX,
+  IconArrowRight, IconArrowLeft, IconUser, IconShieldCheck, IconFileCheck, IconFileText
 } from '@tabler/icons-react';
 import { api } from '../../services/api';
 import { Expediente, DocumentTemplate } from '../../types';
@@ -409,7 +410,7 @@ export const DocumentsPage: React.FC = () => {
                   placeholder="Estado clínico"
                   leftSection={<IconFilter size={16} color="#15803d" />}
                   data={[
-                    { value: '', label: 'Todos los estados' },
+                    { value: '', label: 'Todos' },
                     { value: 'PENDIENTE', label: 'Pendiente' },
                     { value: 'EN_PROCESO', label: 'En Proceso' },
                     { value: 'GENERADO', label: 'Generado' },
@@ -418,7 +419,6 @@ export const DocumentsPage: React.FC = () => {
                   ]}
                   value={statusFilter}
                   onChange={(val) => setFilter('estado', val || '')}
-                  clearable
                   style={{ width: 175 }}
                   size="sm"
                   radius="md"
@@ -434,7 +434,6 @@ export const DocumentsPage: React.FC = () => {
                     ]}
                     value={templateFilter}
                     onChange={(val) => setFilter('template', val || '')}
-                    clearable
                     style={{ width: 220 }}
                     size="sm"
                     radius="md"
@@ -701,7 +700,6 @@ export const DocumentsPage: React.FC = () => {
                   ]}
                   value={templateTypeFilter}
                   onChange={(val) => setTemplateTypeFilter(val || '')}
-                  clearable
                   style={{ width: 210 }}
                   size="sm"
                   radius="md"
@@ -711,34 +709,16 @@ export const DocumentsPage: React.FC = () => {
                   placeholder="Estado"
                   leftSection={<IconCheck size={16} color="#15803d" />}
                   data={[
-                    { value: '', label: 'Todos los estados' },
+                    { value: '', label: 'Todos' },
                     { value: 'true', label: 'Activas' },
                     { value: 'false', label: 'Inactivas' },
                   ]}
                   value={templateStatusFilter}
                   onChange={(val) => setTemplateStatusFilter(val || '')}
-                  clearable
                   style={{ width: 160 }}
                   size="sm"
                   radius="md"
                 />
-
-                <Tooltip label="Refrescar plantillas" withArrow position="top" withinPortal>
-                  <ActionIcon
-                    variant="light"
-                    color="vetGreen"
-                    size="lg"
-                    radius="md"
-                    onClick={fetchTemplates}
-                    aria-label="Refrescar plantillas"
-                    style={{
-                      border: '1px solid #bbf7d0',
-                      transition: 'all 0.18s ease',
-                    }}
-                  >
-                    <IconRefresh size={18} color="#15803d" />
-                  </ActionIcon>
-                </Tooltip>
 
                 {hasActiveTemplateFilters && (
                   <Tooltip label="Limpiar filtros" withArrow position="top" withinPortal>
@@ -923,82 +903,193 @@ export const DocumentsPage: React.FC = () => {
       {/* ==================================================================== */}
       <Modal
         opened={wizardOpened}
-        onClose={() => setWizardOpened(false)}
-        title="Generador Automatizado de Expedientes Veterinarios"
-        size="xl"
+        onClose={() => !generating && setWizardOpened(false)}
+        size={760}
         radius="lg"
+        centered
+        withCloseButton={!generating}
+        transitionProps={{ transition: 'pop', duration: 200 }}
+        overlayProps={{ backgroundOpacity: 0.5, blur: 4 }}
+        title={
+          <Group gap="sm" wrap="nowrap">
+            <ThemeIcon size={42} radius="md" color="vetGreen" variant="light" style={{ border: '1px solid #bbf7d0' }}>
+              <IconStethoscope size={22} color="#15803d" />
+            </ThemeIcon>
+            <div>
+              <Text fw={800} size="md" c="dark.8" style={{ lineHeight: 1.2 }}>
+                Generador Automatizado de Expedientes Veterinarios
+              </Text>
+              <Text size="xs" c="dimmed" mt={2}>
+                Certificación clínica, generación en Google Docs y compilación PDF oficial
+              </Text>
+            </div>
+          </Group>
+        }
       >
-        <Stepper active={wizardStep} onStepClick={setWizardStep} mb="lg" color="vetGreen">
-          <Stepper.Step label="Plantilla" description="Seleccionar formato">
+        <Stepper active={wizardStep} onStepClick={(step) => !generating && setWizardStep(step)} mb="lg" color="vetGreen">
+          <Stepper.Step
+            label="Plantilla Clínica"
+            description="Formato oficial"
+            icon={<IconTemplate size={18} />}
+          >
             <Stack gap="md" mt="md">
-              <Select
-                label="Plantilla Veterinaria"
-                placeholder="Elija la plantilla clínica a utilizar"
-                data={templates.filter((t) => t.is_active).map((t) => ({ value: String(t.id), label: `${t.nombre} (v${t.version})` }))}
-                value={selectedTemplate ? String(selectedTemplate.id) : null}
-                onChange={(val) => {
-                  const found = templates.find((t) => String(t.id) === val);
-                  setSelectedTemplate(found || null);
-                }}
-                required
-                radius="md"
-              />
-              <TextInput
-                label="Asunto / Diagnóstico Clínico"
-                placeholder="Ej: Certificado de Vacunación Canina"
-                value={asunto}
-                onChange={(e) => setAsunto(e.currentTarget.value)}
-                required
-                radius="md"
-              />
-              <TextInput
-                label="Paciente / Solicitante"
-                placeholder="Ej: Max (Golden Retriever) - Dueño: Carlos Gómez"
-                value={solicitante}
-                onChange={(e) => setSolicitante(e.currentTarget.value)}
-                required
-                radius="md"
-              />
-              <Group justify="flex-end" mt="md">
-                <Button color="vetGreen" onClick={() => setWizardStep(1)} disabled={!selectedTemplate} radius="md">
+              <Paper p="md" radius="md" withBorder bg="#f8fafc">
+                <Text size="xs" fw={700} c="vetGreen.9" tt="uppercase" mb="xs">
+                  1. Configuración del Expediente
+                </Text>
+                <Stack gap="sm">
+                  <Select
+                    label="Plantilla Veterinaria"
+                    placeholder="Elija la plantilla clínica a utilizar"
+                    leftSection={<IconTemplate size={16} color="#15803d" />}
+                    data={templates.filter((t) => t.is_active).map((t) => ({ value: String(t.id), label: `${t.nombre} (v${t.version})` }))}
+                    value={selectedTemplate ? String(selectedTemplate.id) : null}
+                    onChange={(val) => {
+                      const found = templates.find((t) => String(t.id) === val);
+                      setSelectedTemplate(found || null);
+                    }}
+                    required
+                    radius="md"
+                  />
+                  <TextInput
+                    label="Asunto / Diagnóstico Clínico"
+                    placeholder="Ej: Certificado de Vacunación Canina"
+                    leftSection={<IconPaw size={16} color="#15803d" />}
+                    value={asunto}
+                    onChange={(e) => setAsunto(e.currentTarget.value)}
+                    required
+                    radius="md"
+                  />
+                  <TextInput
+                    label="Paciente / Solicitante"
+                    placeholder="Ej: Max (Golden Retriever) - Dueño: Carlos Gómez"
+                    leftSection={<IconUser size={16} color="#15803d" />}
+                    value={solicitante}
+                    onChange={(e) => setSolicitante(e.currentTarget.value)}
+                    required
+                    radius="md"
+                  />
+                </Stack>
+              </Paper>
+
+              <Group justify="space-between" mt="xs">
+                <Button variant="default" onClick={() => setWizardOpened(false)} radius="md">
+                  Cancelar
+                </Button>
+                <Button
+                  color="vetGreen"
+                  onClick={() => setWizardStep(1)}
+                  disabled={!selectedTemplate}
+                  radius="md"
+                  rightSection={<IconArrowRight size={16} />}
+                  styles={{
+                    root: {
+                      background: 'linear-gradient(135deg, #16a34a 0%, #15803d 100%)',
+                      boxShadow: '0 4px 12px rgba(22, 163, 74, 0.25)',
+                    },
+                  }}
+                >
                   Siguiente: Completar Datos
                 </Button>
               </Group>
             </Stack>
           </Stepper.Step>
 
-          <Stepper.Step label="Campos Dinámicos" description="Llenar variables">
-            <Box mt="md">
+          <Stepper.Step
+            label="Campos Dinámicos"
+            description="Variables clínicas"
+            icon={<IconFileText size={18} />}
+          >
+            <Stack gap="md" mt="md">
               {selectedTemplate ? (
-                <DynamicForm
-                  fields={selectedTemplate.fields || []}
-                  values={dynamicValues}
-                  onChange={(identifier, val) => setDynamicValues((prev) => ({ ...prev, [identifier]: val }))}
-                />
+                <Paper p="md" radius="md" withBorder bg="#ffffff">
+                  <Group justify="space-between" mb="sm" pb="xs" style={{ borderBottom: '1px solid #f1f5f9' }}>
+                    <Group gap="xs">
+                      <IconTemplate size={16} color="#15803d" />
+                      <Text size="sm" fw={700} c="dark.8">{selectedTemplate.nombre}</Text>
+                    </Group>
+                    <Badge color="vetGreen" variant="light" size="sm">
+                      {selectedTemplate.fields?.length || 0} variables dinámicas
+                    </Badge>
+                  </Group>
+                  <ScrollArea.Autosize mah={380} type="auto">
+                    <DynamicForm
+                      fields={selectedTemplate.fields || []}
+                      values={dynamicValues}
+                      onChange={(identifier, val) => setDynamicValues((prev) => ({ ...prev, [identifier]: val }))}
+                    />
+                  </ScrollArea.Autosize>
+                </Paper>
               ) : (
                 <Text size="sm" c="dimmed">Seleccione una plantilla primero.</Text>
               )}
-              <Group justify="space-between" mt="xl">
-                <Button variant="default" onClick={() => setWizardStep(0)} radius="md">
+
+              <Group justify="space-between" mt="xs">
+                <Button variant="default" onClick={() => setWizardStep(0)} radius="md" leftSection={<IconArrowLeft size={16} />}>
                   Atrás
                 </Button>
-                <Button color="vetGreen" onClick={() => setWizardStep(2)} radius="md">
+                <Button
+                  color="vetGreen"
+                  onClick={() => setWizardStep(2)}
+                  radius="md"
+                  rightSection={<IconArrowRight size={16} />}
+                  styles={{
+                    root: {
+                      background: 'linear-gradient(135deg, #16a34a 0%, #15803d 100%)',
+                      boxShadow: '0 4px 12px rgba(22, 163, 74, 0.25)',
+                    },
+                  }}
+                >
                   Siguiente: Resumen
                 </Button>
               </Group>
-            </Box>
+            </Stack>
           </Stepper.Step>
 
-          <Stepper.Step label="Confirmación" description="Revisar y compilar">
+          <Stepper.Step
+            label="Confirmación"
+            description="Revisar y compilar"
+            icon={<IconFileCheck size={18} />}
+          >
             <Stack gap="md" mt="md">
-              <Paper p="md" withBorder radius="md" bg="gray.0">
-                <Text size="sm"><b>Plantilla:</b> {selectedTemplate?.nombre}</Text>
-                <Text size="sm"><b>Asunto:</b> {asunto || 'Sin asunto'}</Text>
-                <Text size="sm"><b>Paciente:</b> {solicitante || 'Sin solicitante'}</Text>
-                <Text size="sm"><b>Variables completadas:</b> {Object.keys(dynamicValues).length}</Text>
+              <Paper p="lg" withBorder radius="md" bg="#f0fdf4" style={{ borderColor: '#bbf7d0' }}>
+                <Group gap="xs" mb="sm">
+                  <IconShieldCheck size={20} color="#15803d" />
+                  <Text fw={700} size="sm" c="vetGreen.9">
+                    Resumen del Expediente a Generar
+                  </Text>
+                </Group>
+                <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="sm">
+                  <Box>
+                    <Text size="xs" c="dimmed">Plantilla Maestra</Text>
+                    <Text size="sm" fw={600} c="dark.8">{selectedTemplate?.nombre}</Text>
+                  </Box>
+                  <Box>
+                    <Text size="xs" c="dimmed">Tipo de Documento</Text>
+                    <Badge color="vetGreen" size="sm" variant="light">{selectedTemplate?.tipo}</Badge>
+                  </Box>
+                  <Box>
+                    <Text size="xs" c="dimmed">Asunto / Diagnóstico</Text>
+                    <Text size="sm" fw={600} c="dark.8">{asunto || 'Sin asunto especificado'}</Text>
+                  </Box>
+                  <Box>
+                    <Text size="xs" c="dimmed">Paciente / Solicitante</Text>
+                    <Text size="sm" fw={600} c="dark.8">{solicitante || 'Sin solicitante'}</Text>
+                  </Box>
+                </SimpleGrid>
+                <Divider my="sm" color="#dcfce7" />
+                <Group justify="space-between">
+                  <Text size="xs" c="vetGreen.8" fw={600}>
+                    Variables completadas: {Object.keys(dynamicValues).length} de {selectedTemplate?.fields?.length || 0}
+                  </Text>
+                  <Badge color="teal" variant="filled" size="xs">
+                    Certificación Automática Activa
+                  </Badge>
+                </Group>
               </Paper>
-              <Group justify="space-between" mt="md">
-                <Button variant="default" onClick={() => setWizardStep(1)} radius="md">
+
+              <Group justify="space-between" mt="xs">
+                <Button variant="default" onClick={() => setWizardStep(1)} radius="md" disabled={generating} leftSection={<IconArrowLeft size={16} />}>
                   Atrás
                 </Button>
                 <Button
@@ -1007,6 +1098,13 @@ export const DocumentsPage: React.FC = () => {
                   leftSection={<IconFileSpark size={18} />}
                   onClick={handleExecuteGeneration}
                   radius="md"
+                  styles={{
+                    root: {
+                      background: 'linear-gradient(135deg, #16a34a 0%, #15803d 100%)',
+                      boxShadow: '0 4px 14px rgba(22, 163, 74, 0.3)',
+                      fontWeight: 700,
+                    },
+                  }}
                 >
                   Compilar y Generar Documento
                 </Button>
@@ -1015,15 +1113,18 @@ export const DocumentsPage: React.FC = () => {
           </Stepper.Step>
 
           <Stepper.Completed>
-            <Stack align="center" gap="md" mt="xl">
-              <ThemeIcon size={64} radius="xl" color="teal">
-                <IconCheck size={36} />
+            <Stack align="center" gap="md" mt="xl" p="md">
+              <ThemeIcon size={72} radius="xl" color="vetGreen" variant="light" style={{ border: '2px solid #bbf7d0' }}>
+                <IconCheck size={40} color="#15803d" />
               </ThemeIcon>
-              <Title order={3} ta="center">¡Expediente Generado con Éxito!</Title>
-              <Text size="sm" c="dimmed" ta="center">
-                El documento N° <b>{generationResult?.numero_expediente}</b> fue generado, almacenado y registrado.
+              <Title order={3} ta="center" fw={800} c="dark.8">
+                ¡Expediente Veterinario Generado con Éxito!
+              </Title>
+              <Text size="sm" c="dimmed" ta="center" style={{ maxWidth: 460 }}>
+                El expediente oficial N° <Badge size="lg" color="vetGreen" variant="filled" mx={4}>{generationResult?.numero_expediente}</Badge> ha sido compilado en Google Docs y almacenado en Google Drive.
               </Text>
-              <Group mt="md">
+
+              <Group mt="lg" gap="sm">
                 {generationResult?.pdf_url && (
                   <Button
                     color="red"
@@ -1032,11 +1133,29 @@ export const DocumentsPage: React.FC = () => {
                     href={generationResult.pdf_url}
                     target="_blank"
                     radius="md"
+                    styles={{
+                      root: {
+                        background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
+                        boxShadow: '0 4px 12px rgba(239, 68, 68, 0.25)',
+                      },
+                    }}
                   >
                     Descargar PDF Oficial
                   </Button>
                 )}
-                <Button variant="outline" color="gray" onClick={() => setWizardOpened(false)} radius="md">
+                {generationResult?.google_doc_url && (
+                  <Button
+                    color="blue"
+                    leftSection={<IconExternalLink size={18} />}
+                    component="a"
+                    href={generationResult.google_doc_url}
+                    target="_blank"
+                    radius="md"
+                  >
+                    Abrir en Google Docs
+                  </Button>
+                )}
+                <Button variant="default" onClick={() => setWizardOpened(false)} radius="md">
                   Cerrar
                 </Button>
               </Group>

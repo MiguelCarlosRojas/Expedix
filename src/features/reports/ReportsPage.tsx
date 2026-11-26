@@ -64,11 +64,8 @@ export const ReportsPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
 
   // Filtros sincronizados con URL Query Parameters
-  const startDateStr = getFilter('start_date', '');
-  const endDateStr = getFilter('end_date', '');
-
-  const startDate = startDateStr ? new Date(startDateStr) : null;
-  const endDate = endDateStr ? new Date(endDateStr) : null;
+  const dateStr = getFilter('fecha', getFilter('start_date', ''));
+  const selectedDate = dateStr ? new Date(dateStr + (dateStr.includes('T') ? '' : 'T12:00:00')) : null;
 
   // Carga del reporte específico desde el backend
   const fetchReport = async () => {
@@ -76,8 +73,10 @@ export const ReportsPage: React.FC = () => {
       setLoading(true);
       setError(null);
       const params = new URLSearchParams();
-      if (startDateStr) params.append('start_date', startDateStr);
-      if (endDateStr) params.append('end_date', endDateStr);
+      if (dateStr) {
+        params.append('start_date', dateStr);
+        params.append('end_date', dateStr);
+      }
 
       const res = await api.get<ReportData>(`/reports/${activeReport}/?${params.toString()}`);
       setReportData(res.data);
@@ -90,7 +89,7 @@ export const ReportsPage: React.FC = () => {
 
   useEffect(() => {
     fetchReport();
-  }, [activeReport, startDateStr, endDateStr]);
+  }, [activeReport, dateStr]);
 
   const handleTabChange = (val: string | null) => {
     const nextReport = val || '1';
@@ -98,9 +97,13 @@ export const ReportsPage: React.FC = () => {
     setFilter('tipo', nextReport);
   };
 
-  const handleDateChange = (field: 'start_date' | 'end_date', date: Date | null) => {
-    const formatted = date ? date.toISOString().split('T')[0] : '';
-    setFilter(field, formatted);
+  const handleDateChange = (date: Date | null) => {
+    if (date) {
+      const formatted = date.toISOString().split('T')[0];
+      setFilters({ fecha: formatted, start_date: formatted, end_date: formatted });
+    } else {
+      clearFilters(['tipo']);
+    }
   };
 
   const handleClearFilters = () => {
@@ -111,8 +114,10 @@ export const ReportsPage: React.FC = () => {
   const handleExport = (format: 'pdf' | 'excel' | 'csv') => {
     const params = new URLSearchParams();
     params.append('format', format);
-    if (startDateStr) params.append('start_date', startDateStr);
-    if (endDateStr) params.append('end_date', endDateStr);
+    if (dateStr) {
+      params.append('start_date', dateStr);
+      params.append('end_date', dateStr);
+    }
 
     window.open(`/api/v1/reports/${activeReport}/export/?${params.toString()}`, '_blank');
   };
@@ -203,40 +208,35 @@ export const ReportsPage: React.FC = () => {
         <Group justify="space-between" wrap="wrap">
           <Group gap="sm">
             <DateInput
-              placeholder="Fecha inicial (desde)"
+              placeholder="Filtrar por fecha clínica"
               size="sm"
-              value={startDate}
-              onChange={(d) => handleDateChange('start_date', d)}
-              clearable
+              value={selectedDate}
+              onChange={handleDateChange}
+              valueFormat="YYYY-MM-DD"
               leftSection={<IconCalendar size={16} color="#16a34a" />}
+              clearable={false}
+              radius="md"
+              style={{ width: 220 }}
             />
-            <DateInput
-              placeholder="Fecha final (hasta)"
-              size="sm"
-              value={endDate}
-              onChange={(d) => handleDateChange('end_date', d)}
-              clearable
-              leftSection={<IconCalendar size={16} color="#16a34a" />}
-            />
-            <ActionIcon
-              variant="light"
-              color="vetGreen"
-              size="lg"
-              onClick={fetchReport}
-              title="Actualizar datos"
-            >
-              <IconRefresh size={18} />
-            </ActionIcon>
-            {(startDateStr || endDateStr) && (
-              <Button
-                variant="subtle"
-                color="gray"
-                size="xs"
-                leftSection={<IconFilterOff size={14} />}
-                onClick={handleClearFilters}
-              >
-                Limpiar filtros
-              </Button>
+            {dateStr && (
+              <Tooltip label="Limpiar filtros" withArrow position="top" withinPortal>
+                <ActionIcon
+                  variant="light"
+                  color="vetGreen"
+                  size="lg"
+                  radius="md"
+                  onClick={handleClearFilters}
+                  aria-label="Limpiar filtros"
+                  style={{
+                    backgroundColor: '#f0fdf4',
+                    border: '1px solid #bbf7d0',
+                    color: '#15803d',
+                    transition: 'all 0.18s ease',
+                  }}
+                >
+                  <IconFilterOff size={18} />
+                </ActionIcon>
+              </Tooltip>
             )}
           </Group>
 
